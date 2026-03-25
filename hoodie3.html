@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tan Hoodie - Mama I'm a Billionaire</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Roboto Mono', monospace;
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+/* Fixed header that fits the screen properly */
+header {
+ background-color: transparent; /* No solid background blocking the blend */
+  backdrop-filter: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;  /* keeps nav on the right */
+  align-items: center;
+  padding: 0 32px;            /* smaller horizontal padding */
+  height: 90px;               /* fixed height */
+  background-color: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  box-sizing: border-box;      /* prevents padding from overflowing */
+  overflow: hidden;            /* keeps content inside header */
+}
+
+header .logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 180px;
+  height: auto;
+  z-index: 101;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0);
+
+  /* Blend effect */
+  mix-blend-mode: difference;  /* fixed typo */
+  filter: invert(1) contrast(200%) brightness(200%);
+}
+
+header .cart {
+  position: absolute;
+  left: 90%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 40px;
+  height: auto;
+  z-index: 101;
+  cursor: pointer; /* shows a pointer on hover */
+}
+    img {
+      transform: translate(0, 25%);
+      max-width: 500px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0);
+    }
+    .title {
+      transform: translate(0, 125px);
+      font-size: 4rem;
+      margin: 12px 0;
+    }
+    .price {
+      transform: translate(0, 150%);
+      font-size: 1.5rem;
+      margin: 12px 0;
+    }
+    .paypal-button {
+      transform: translate(0, 50px);
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+   <!-- Header -->
+<header>
+  <nav>
+<a href="home.html">
+  <img src="Mama-Bill.png" alt="Mama I'm a Billionaire" class="logo">
+</a>
+
+  </nav>
+  <nav>
+    <a href="cart.html">
+      <img src="https://raw.githubusercontent.com/Nulvyn-Visuals/mamaimabillionare.github.io/refs/heads/main/Cart.png" alt="Cart" class="cart">
+    </a>
+  </nav>
+</header>
+
+
+
+  <h1 class="title">Tan Hoodie 2</h1>
+  <img src="tan-hoodie2-front.png" alt="Tan Hoodie 2">
+  <p class="price">$79.99</p>
+  <p class="price">High-quality cotton hoodie with embroidered logo.</p>
+
+  <!-- PayPal Button -->
+  <div id="paypal-button-container" class="paypal-button"></div>
+
+  <script src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID&currency=USD"></script>
+  <script>
+    paypal.Buttons({
+      createOrder: function(data, actions) {
+        return actions.order.create({
+          purchase_units: [{
+            description: "Tan Hoodie 2",
+            amount: { value: '79.99' }
+          }]
+        });
+      },
+      onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+          alert('Thanks for your purchase, ' + details.payer.name.given_name + '!');
+        });
+      }
+    }).render('#paypal-button-container');
+  </script>
+
+</body>
+</html>
