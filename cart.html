@@ -58,29 +58,29 @@
             white-space: nowrap;
             border-right: 2px solid white;
             overflow: hidden;
-            width: 15ch;
-            animation: typing 2s steps(15), blink 0.4s infinite step-end alternate;
+            width: 7ch;
+            animation: typing 2s steps(30) forwards, blink 1s infinite step-end alternate;
             text-align: center;
         }
 
         @keyframes typing {
             from { width: 0 }
-            to { width: 15ch }
+            to { width: 23ch }
         }
+
         @keyframes blink {
             from { border-color: white }
             to { border-color: transparent }
         }
 
-        /* On phones: make spinning GIF smaller (customize here) */
-        @media (max-width: 900px) {
+        /* Mobile adjustments */
+        @media (max-width: 700px) {
             #spin {
-                width: 650px; /* Adjust size for phones here */
+                width: 650px;
             }
 
             #text {
                 font-size: 1.5em;
-                width: 12ch;
             }
         }
     </style>
@@ -91,5 +91,7 @@
 
     <!-- Spinning GIF -->
     <img id="spin" src="https://raw.githubusercontent.com/Nulvyn-Visuals/mamaimabillionare.github.io/refs/heads/main/Cart.png" alt="Spinning">
+    <div id="text">[OPPS SORRY YOUR EARLY]</div>
+
 </body>
 </html>
