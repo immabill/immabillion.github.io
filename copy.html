@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mama I'm a Billionaire</title>
+  <style>
+    /* Page reset */
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: transparent;   /* let background gif show through */
+      color: #fff;
+    }
+
+    /* Full-page animated background (keep file name the same) */
+    #bg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2; /* behind everything */
+    }
+
+.spin {
+  display: block;
+  margin: 40px auto; /* centers it horizontally */
+  width: 310px;      /* make it smaller */
+  height: auto;      /* keeps correct aspect ratio */
+  object-fit: contain;
+  z-index: 1;
+  position: relative;
+}
+
+
+/* Fixed header that fits the screen properly */
+header {
+  backdrop-filter: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;  /* keeps nav on the right */
+  align-items: center;
+  padding: 0 32px;            /* smaller horizontal padding */
+  height: 90px;               /* fixed height */
+  background-color: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  box-sizing: border-box;      /* prevents padding from overflowing */
+  overflow: hidden;            /* keeps content inside header */
+}
+
+header .logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 180px;
+  height: auto;
+  z-index: 101;
+  pointer-events: none;
+
+  /* This is the magic */
+  mix-blend-mode: difference;  /* Inverts all layers behind it */
+  filter: invert(1) contrast(200%) brightness(200%);
+}
+
+header .cart {
+  position: absolute;
+  left: 90%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 60px;
+  height: auto;
+  z-index: 101;
+  cursor: pointer; /* shows a pointer on hover */
+}
+
+ item {
+  cursor: pointer; /* shows a pointer on hover */
+}
+
+
+
+
+/* Nav links */
+nav {
+  display: flex;
+  gap: 24px; /* equal spacing between links */
+}
+
+nav a {
+  color: rgba(255,255,255,0.95);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  white-space: nowrap;  /* keeps links on one line */
+}
+
+/* Add top padding so page content isn't hidden behind header */
+body {
+  padding-top: 90px; /* equal to header height */
+}
+
+
+/* Footer styling */
+footer {
+  text-align: center;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 40px;
+}
+
+footer a {
+  color: #fff;
+  text-decoration: none;
+  margin: 0 6px;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+
+    /* Nav (keeps clickable links on the right) */
+    nav {
+      z-index: 12; /* above centered logo */
+    }
+    nav a {
+      color: rgba(255,255,255,0);
+      text-decoration: none;
+      margin-left: 28px;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    /* SERVICES section container */
+    #services {
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 36px 20px 80px;
+    }
+
+    /* Heading */
+    .hero-text {
+      display: block;
+      width: 100%;
+      color: #fff;
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin: 28px 0 36px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0);
+    }
+    .move {
+     width: 50%;
+    }
+
+    /* Product grid */
+    .services {
+      background-color: rgba(255, 255, 255,0.1);
+      padding: 10px;
+      border-radius: 15px;
+      display: flex;
+      gap: 60px;
+
+      overflow-x: auto;     /* enables horizontal scrolling */
+      overflow-y: hidden;   /* optional: prevents vertical scroll */
+
+      scroll-behavior: smooth; /* optional: smooth scrolling */
+      padding-bottom: 10px; /* optional: space for scrollbar */
+      scrollbar-color: rgba(255,255,255,0.4) transparent;
+    }
+
+.services > * {
+  flex: 0 0 auto; /* prevents items from shrinking and forces horizontal layout */
+  min-width: 300px; /* matches your original intent */
+}
+
+    .service {
+      background-color: rgba(255, 255, 255,0.1); /* subtle card against dark gif */
+      padding: 2px;
+      border-radius: 18px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+      max-width: 320px;
+      width: 120%;
+      max-hight: 320px;
+      text-align: center;
+      color: #111; /* text inside card can be dark for readability */
+    }
+
+    .service img {
+      width: 160%;
+      max-width: 220px;
+      display: block;
+      margin: 12px auto;
+      border-radius: 8px;
+      filter: drop-shadow(0px 0px 5px rgba(18, 18, 18, 0.7));
+    }
+
+    .service h3 {
+      margin: 14px 0 6px;
+      color: #111;
+    }
+
+    .service p {
+      margin: 0 0 8px;
+      color: white;
+      font-size: 0.95rem;
+    }
+
+    /* Responsive: smaller screens */
+    @media (max-width: 880px) {
+      header { padding: 18px 24px; min-height: 110px; }
+      .inverted-background { width: 220px; }
+      nav a { font-size: 16px; margin-left: 18px; }
+      .hero-text { font-size: 2rem; }
+      .services { gap: 18px; }
+    }
+
+    @media (max-width: 520px) {
+      header { padding: 12px 16px; min-height: 92px; }
+      .inverted-background { width: 160px; top: 46%; } /* slightly up for better spacing */
+      nav a { font-size: 14px; margin-left: 12px; }
+      .hero-text { font-size: 1.6rem; margin-top: 18px; }
+      .service { max-width: 92%; padding: 14px; }
+      .service img { width: 72%; }
+    }
+
+
+  </style>
+</head>
+<body>
+  <!-- Background GIF -->
+  <img id="bg" src="background.gif" alt="Background">
+
+  <!-- Header -->
+<header>
+  <img src="Mama-Bill.png" alt="Mama I'm a Billionaire" class="logo">
+
+  <nav>
+    <a href="cart.html">
+      <img src="Cart.png" alt="Cart" class="cart">
+    </a>
+  </nav>
+</header>
+
+
+
+<!-- Services Section -->
+  <section id="services">
+    <h2 class="hero-text"></h2>
+
+    <div class="services">
+      <div class="service">
+    <a href="13bill.html">
+      <img src="DROP1/13bill/13bill.png" alt="13bill" class="item">
+    </a>
+        <p class="item">13 Billion - $34.99</p>
+      </div>
+
+      <div class="service">
+    <a href="for-the-future.html">
+      <img src="DROP1/forthefuture/for-the-future.png" alt="for-the-future" class="item">
+    </a>
+        <p class="item">For The Future - $35.99</p>
+      </div>
+
+      <div class="service">
+    <a href="look-towards-the-light.html">
+      <img src="DROP1/looklight/look-towards-the-light.png" alt="look-towards-the-light" class="item">
+    </a>
+        <p>Look Towards The Light - $36.99</p>
+    </div>
+
+      <div class="service">
+    <a href="look-towards-the-light.html">
+      <img src="DROP1/looklighthoodie/look-towards-the-light-h.png" alt="look-towards-the-light-h" class="item">
+    </a>
+        <p>Look Towards The Light Hoodie - $36.99</p>
+      </div>
+
+      <div class="service">
+    <a href="look-towards-the-light.html">
+      <img src="DROP1/theOG/the-og.png" alt="the-og" class="item">
+    </a>
+        <p>theOG Hoodie - $36.99</p>
+      </div>
+    </div>
+
+
+  </section>
+
+<section id="About">
+<h2 style="font-family: monospace, sans-serif; font-size: 20px; color: white; text-align: center;">About “Mama I’m a Billionaire”</h2>
+
+    <p style="font-family: monospace, sans-serif; font-size: 17px; color: white; text-align: center; padding-left: 10%; padding-right: 10%;">“Mama I’m a Billionaire” isn’t just a name it’s a quiet promise. It’s for the days when nothing feels certain, but you keep going anyway. It’s about believing that one day, all the long nights, risks, and sacrifices will turn into something real. Not just success for yourself, but a moment you can share—when you finally look your mom and dad in the eyes and say it, not as a dream, but as the truth you built.</p>
+
+    <p style="font-family: monospace, sans-serif; font-size: 17px; color: white; text-align: center;">- Lukas Mieliauskas</p>
+    </section>
+
+
+<section id="move">
+  <img src="move.gif" alt="Mama I'm a Billionaire" class="spin">
+</section>
+
+  <footer>
+    <p>MMB © | Nulvyn © | Servers With GitHub Pages | Website By: Kuba Kieca | Business By: Lukas Mieliauskas</p>
+    <div>
+      <a href="https://www.instagram.com/nulvyn_visuals/" target="_blank">Instagram</a> |
+      <a href="https://www.tiktok.com/@the_butter_guy" target="_blank">TikTok</a> |
+      <a href="mailto:lmieliauskas62@gmail.com">lmieliauskas62@gmail.com</a>
+    </div>
+  </footer>
+</body>
+</html>
