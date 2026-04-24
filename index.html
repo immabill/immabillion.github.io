@@ -19,6 +19,7 @@
             cursor: pointer;
         }
 
+        /* Background */
         #bg {
             position: fixed;
             top: 0;
@@ -29,6 +30,7 @@
             z-index: -2;
         }
 
+        /* Spinning image */
         #spin {
             position: absolute;
             top: 50%;
@@ -38,28 +40,43 @@
             z-index: -1;
         }
 
+        /* Countdown text */
         #countdown {
             position: absolute;
             top: 75%;
             left: 50%;
             transform: translate(-50%, -50%);
             color: white;
-            font-size: 2em;
             font-family: 'Courier New', monospace;
             text-shadow: 
                 -1px -1px 0 black,
                 1px -1px 0 black,
                 -1px 1px 0 black,
                 1px 1px 0 black;
+
+            font-size: clamp(18px, 5vw, 48px);
+            white-space: nowrap;
+            text-align: center;
         }
 
+        /* Tablet */
+        @media (max-width: 1000px) {
+            #spin {
+                width: 900px;
+            }
+        }
+
+        /* Phone */
         @media (max-width: 700px) {
             #spin {
                 width: 650px;
             }
+        }
 
-            #countdown {
-                font-size: 1.5em;
+        /* Small phone */
+        @media (max-width: 400px) {
+            #spin {
+                width: 500px;
             }
         }
     </style>
@@ -67,14 +84,14 @@
 
 <body>
 
-<img id="bg" src="background.gif">
-<img id="spin" src="spin.gif">
+<img id="bg" src="background.gif" alt="Background">
+<img id="spin" src="spin.gif" alt="Spinning">
 
 <div id="countdown">Loading...</div>
 
 <script>
-    // Format: "YYYY-MM-DDTHH:MM:SS"
-const targetDate = new Date("2026-05-07T16:00:00-05:00");
+    // 🔥 TARGET DATE (May 7th, 2026 at 4PM Central Daylight Time)
+    const targetDate = new Date("2026-05-07T16:00:00-05:00");
 
     const countdownEl = document.getElementById("countdown");
 
@@ -83,7 +100,7 @@ const targetDate = new Date("2026-05-07T16:00:00-05:00");
         const diff = targetDate - now;
 
         if (diff <= 0) {
-            countdownEl.innerText = "TIME!";
+            countdownEl.innerText = "[Enter]";
             return;
         }
 
@@ -98,9 +115,12 @@ const targetDate = new Date("2026-05-07T16:00:00-05:00");
 
     setInterval(updateCountdown, 1000);
     updateCountdown();
-</script>
-<p style="font-family: monospace, sans-serif; font-size: 17px; color: white; text-align: center;   margin: 15%;">DROP #1</p>
 
+    // Click to go to home page
+    document.body.addEventListener("click", () => {
+        window.location.href = "home.html";
+    });
+</script>
 
 </body>
 </html>
