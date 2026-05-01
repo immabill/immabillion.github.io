@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Inventory Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #111;
+      color: white;
+    }
+
+    input, textarea {
+      display:block;
+      margin:10px 0;
+      padding:10px;
+      width:300px;
+    }
+
+    button {
+      padding:10px 15px;
+      cursor:pointer;
+      margin-top:5px;
+    }
+
+    .product {
+      border:1px solid #333;
+      padding:10px;
+      margin:10px 0;
+    }
+
+    img {
+      width:80px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Inventory Dashboard</h1>
+
+<button onclick="logout()">Logout</button>
+
+<h2>Add Product</h2>
+
+<input id="name" placeholder="Name">
+<textarea id="desc" placeholder="Description"></textarea>
+<input id="price" type="number" placeholder="Price">
+<input id="image" placeholder="Image URL">
+
+<button onclick="addProduct()">Add Product</button>
+
+<h2>Products</h2>
+<div id="products"></div>
+
+<script>
+const supabaseClient = window.supabase.createClient(
+    "https://lgbhuuamjoetubdyxecx.supabase.co",
+    "sb_publishable_Wpmh3yxwlyWaonDgSnNMcw_qGp_HjqL"
+);
+
+// 🔐 AUTH CHECK
+async function checkAuth() {
+  const { data } = await supabaseClient.auth.getUser();
+
+  if (!data.user) {
+    window.location.href = "/admin/login.html";
+  }
+}
+
+checkAuth();
+
+// ➕ ADD PRODUCT
+async function addProduct() {
+  const { error } = await supabaseClient.from("products").insert([{
+    name: document.getElementById("name").value,
+    description: document.getElementById("desc").value,
+    price: document.getElementById("price").value,
+    main_image: document.getElementById("image").value
+  }]);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  loadProducts();
+}
+
+// 📦 LOAD PRODUCTS
+async function loadProducts() {
+  const { data } = await supabaseClient.from("products").select("*");
+
+  const container = document.getElementById("products");
+  container.innerHTML = "";
+
+  data.forEach(p => {
+    container.innerHTML += `
+      <div class="product">
+        <img src="${p.main_image || ''}">
+        <h3>${p.name}</h3>
+        <p>${p.description || ''}</p>
+        <p>$${p.price}</p>
+        <button onclick="deleteProduct('${p.id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
+// 🗑 DELETE
+async function deleteProduct(id) {
+  await supabaseClient.from("products").delete().eq("id", id);
+  loadProducts();
+}
+
+// 🚪 LOGOUT
+async function logout() {
+  await supabaseClient.auth.signOut();
+  window.location.href = "/admin/login.html";
+}
+
+loadProducts();
+</script>
+
+</body>
+</html>

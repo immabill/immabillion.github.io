@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial; padding: 40px; }
+    input { display:block; margin:10px 0; padding:10px; width:250px; }
+    button { padding:10px 15px; cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<h2>Admin Login</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+
+<script>
+const supabaseClient = window.supabase.createClient(
+    "https://lgbhuuamjoetubdyxecx.supabase.co",
+    "sb_publishable_Wpmh3yxwlyWaonDgSnNMcw_qGp_HjqL"
+);
+
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  window.location.href = "/admin/";
+}
+</script>
+
+</body>
+</html>
