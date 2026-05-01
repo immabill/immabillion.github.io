@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Inventory Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, textarea { display:block; margin:10px 0; width:300px; }
+    img { width: 80px; }
+  </style>
+</head>
+<body>
+
+<h1>Inventory Dashboard</h1>
+
+<h2>Add Product</h2>
+
+<input id="name" placeholder="Product Name">
+<textarea id="desc" placeholder="Description"></textarea>
+<input id="price" placeholder="Price">
+<input id="image" placeholder="Main Image URL">
+
+<button onclick="addProduct()">Add Product</button>
+
+<h2>Products</h2>
+<div id="products"></div>
+
+<script>
+const supabase = supabase.createClient(
+  "https://lgbhuuamjoetubdyxecx.supabase.co",
+  "sb_publishable_Wpmh3yxwlyWaonDgSnNMcw_qGp_HjqL"
+);
+
+async function addProduct() {
+  const { error } = await supabase.from("products").insert([{
+    name: document.getElementById("name").value,
+    description: document.getElementById("desc").value,
+    price: document.getElementById("price").value,
+    main_image: document.getElementById("image").value
+  }]);
+
+  if (!error) {
+    alert("Added!");
+    loadProducts();
+  }
+}
+
+async function loadProducts() {
+  const { data } = await supabase.from("products").select("*");
+
+  const container = document.getElementById("products");
+  container.innerHTML = "";
+
+  data.forEach(p => {
+    container.innerHTML += `
+      <div>
+        <img src="${p.main_image}">
+        <b>${p.name}</b> - $${p.price}
+        <button onclick="deleteProduct('${p.id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
+async function deleteProduct(id) {
+  await supabase.from("products").delete().eq("id", id);
+  loadProducts();
+}
+
+loadProducts();
+</script>
+
+</body>
+</html>
