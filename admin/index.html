@@ -2,127 +2,139 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Inventory Dashboard</title>
+  <title>Dashboard</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
 
   <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-      background: #111;
-      color: white;
-    }
-
-    input, textarea {
-      display:block;
-      margin:10px 0;
-      padding:10px;
-      width:300px;
-    }
-
-    button {
-      padding:10px 15px;
-      cursor:pointer;
-      margin-top:5px;
-    }
-
-    .product {
-      border:1px solid #333;
-      padding:10px;
-      margin:10px 0;
-    }
-
-    img {
-      width:80px;
-    }
+    body { font-family: Arial; padding: 20px; background:#111; color:white; }
+    input, textarea { display:block; margin:10px 0; padding:8px; width:300px; }
+    .card { border:1px solid #333; padding:10px; margin:10px 0; }
+    img { width:80px; }
+    button { margin:5px; }
   </style>
 </head>
 
 <body>
 
-<h1>Inventory Dashboard</h1>
-
+<h1>Inventory System</h1>
 <button onclick="logout()">Logout</button>
+
+<hr>
 
 <h2>Add Product</h2>
 
 <input id="name" placeholder="Name">
 <textarea id="desc" placeholder="Description"></textarea>
 <input id="price" type="number" placeholder="Price">
-<input id="image" placeholder="Image URL">
+<input id="stock" type="number" placeholder="Stock">
+<input type="file" id="imageFile">
 
-<button onclick="addProduct()">Add Product</button>
+<button onclick="addProduct()">Add</button>
 
 <h2>Products</h2>
-<div id="products"></div>
+<div id="list"></div>
 
 <script>
-const supabaseClient = window.supabase.createClient(
-    "https://lgbhuuamjoetubdyxecx.supabase.co",
-    "sb_publishable_Wpmh3yxwlyWaonDgSnNMcw_qGp_HjqL"
-);
+const bucket = "product-images";
 
-// 🔐 AUTH CHECK
+/* 🔐 AUTH CHECK */
 async function checkAuth() {
-  const { data } = await supabaseClient.auth.getUser();
-
-  if (!data.user) {
-    window.location.href = "/admin/login.html";
-  }
+  const { data } = await sb.auth.getUser();
+  if (!data.user) window.location.href = "login.html";
 }
-
 checkAuth();
 
-// ➕ ADD PRODUCT
+/* 📤 UPLOAD IMAGE */
+async function uploadImage(file) {
+  const fileName = Date.now() + "-" + file.name;
+
+  const { error } = await sb.storage
+    .from(bucket)
+    .upload(fileName, file);
+
+  if (error) return null;
+
+  return sb.storage.from(bucket).getPublicUrl(fileName).data.publicUrl;
+}
+
+/* ➕ ADD PRODUCT */
 async function addProduct() {
-  const { error } = await supabaseClient.from("products").insert([{
-    name: document.getElementById("name").value,
-    description: document.getElementById("desc").value,
-    price: document.getElementById("price").value,
-    main_image: document.getElementById("image").value
+  const file = imageFile.files[0];
+  const imageUrl = file ? await uploadImage(file) : null;
+
+  await sb.from("products").insert([{
+    name: name.value,
+    description: desc.value,
+    price: price.value,
+    stock: stock.value,
+    main_image: imageUrl
   }]);
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  loadProducts();
+  load();
 }
 
-// 📦 LOAD PRODUCTS
-async function loadProducts() {
-  const { data } = await supabaseClient.from("products").select("*");
+/* 📦 LOAD */
+async function load() {
+  const { data } = await sb.from("products").select("*");
 
-  const container = document.getElementById("products");
-  container.innerHTML = "";
+  list.innerHTML = data.map(p => `
+    <div class="card">
+      <img src="${p.main_image || ''}">
+      <h3 contenteditable onblur="edit('${p.id}','name',this.innerText)">${p.name}</h3>
+      <p contenteditable onblur="edit('${p.id}','description',this.innerText)">${p.description || ''}</p>
 
-  data.forEach(p => {
-    container.innerHTML += `
-      <div class="product">
-        <img src="${p.main_image || ''}">
-        <h3>${p.name}</h3>
-        <p>${p.description || ''}</p>
-        <p>$${p.price}</p>
-        <button onclick="deleteProduct('${p.id}')">Delete</button>
-      </div>
-    `;
-  });
+      <p>
+        Price: <span contenteditable onblur="edit('${p.id}','price',this.innerText)">${p.price}</span>
+      </p>
+
+      <p>
+        Stock: 
+        <button onclick="stock('${p.id}',-1)">-</button>
+        ${p.stock}
+        <button onclick="stock('${p.id}',1)">+</button>
+      </p>
+
+      <button onclick="del('${p.id}')">Delete</button>
+    </div>
+  `).join("");
 }
 
-// 🗑 DELETE
-async function deleteProduct(id) {
-  await supabaseClient.from("products").delete().eq("id", id);
-  loadProducts();
+/* ✏️ EDIT INLINE */
+async function edit(id, field, value) {
+  await sb.from("products")
+    .update({ [field]: value })
+    .eq("id", id);
 }
 
-// 🚪 LOGOUT
+/* 📦 STOCK */
+async function stock(id, change) {
+  const { data } = await sb.from("products")
+    .select("stock")
+    .eq("id", id)
+    .single();
+
+  await sb.from("products")
+    .update({ stock: data.stock + change })
+    .eq("id", id);
+
+  load();
+}
+
+/* 🗑 DELETE */
+async function del(id) {
+  await sb.from("products").delete().eq("id", id);
+  load();
+}
+
+/* 🚪 LOGOUT */
 async function logout() {
-  await supabaseClient.auth.signOut();
-  window.location.href = "/admin/login.html";
+  await sb.auth.signOut();
+  window.location.href = "login.html";
 }
 
-loadProducts();
+load();
 </script>
 
 </body>
