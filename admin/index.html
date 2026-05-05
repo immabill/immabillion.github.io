@@ -65,9 +65,14 @@ async function uploadImages(files) {
   for (let file of files) {
     const fileName = Date.now() + "-" + file.name;
 
-    await sb.storage
+    const { error } = await sb.storage
       .from("product-images")
       .upload(fileName, file);
+
+    if (error) {
+      console.error(error);
+      continue;
+    }
 
     const { data } = sb.storage
       .from("product-images")
@@ -80,23 +85,31 @@ async function uploadImages(files) {
 }
 
 async function addProduct() {
-  const files = imageFile.files;
-  const images = files.length ? await uploadImages(files) : [];
+  const files = document.getElementById("imageFile").files;
+
+  let mainImage = null;
+  let extras = [];
+
+  if (files.length > 0) {
+    const uploaded = await uploadImages(files);
+    mainImage = uploaded[0] || null;
+    extras = uploaded.slice(1);
+  }
 
   const product = {
     name: document.getElementById("name").value,
     description: document.getElementById("desc").value,
     price: Number(document.getElementById("price").value),
     stock: Number(document.getElementById("stock").value || 0),
-    main_image: images[0] || null,
-    images: images
+    main_image: mainImage,
+    images: extras
   };
 
   const { error } = await sb.from("products").insert([product]);
 
   if (error) {
     console.error(error);
-    alert("Failed to add product");
+    alert("Error adding product");
     return;
   }
 
@@ -109,7 +122,7 @@ async function load() {
   list.innerHTML = data.map(p => `
     <div class="card">
       <img src="${p.main_image || ''}">
-      <h3>${p.name}</h3>
+      <h3>${p.name || ''}</h3>
       <p>${p.description || ''}</p>
       <p>Price: $${p.price}</p>
       <p>Stock: ${p.stock}</p>
@@ -129,10 +142,10 @@ async function openEditor(id) {
     .eq("id", id)
     .single();
 
-  edit_name.value = data.name;
-  edit_desc.value = data.description;
-  edit_price.value = data.price;
-  edit_stock.value = data.stock;
+  document.getElementById("edit_name").value = data.name || "";
+  document.getElementById("edit_desc").value = data.description || "";
+  document.getElementById("edit_price").value = data.price || 0;
+  document.getElementById("edit_stock").value = data.stock || 0;
 
   document.getElementById("editor").style.display = "block";
 }
@@ -143,10 +156,10 @@ function closeEditor() {
 
 async function saveEdit() {
   await sb.from("products").update({
-    name: edit_name.value,
-    description: edit_desc.value,
-    price: Number(edit_price.value),
-    stock: Number(edit_stock.value)
+    name: document.getElementById("edit_name").value,
+    description: document.getElementById("edit_desc").value,
+    price: Number(document.getElementById("edit_price").value),
+    stock: Number(document.getElementById("edit_stock").value)
   }).eq("id", editingId);
 
   closeEditor();

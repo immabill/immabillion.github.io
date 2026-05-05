@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Product</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <style>
+    body { font-family: Arial; background:#111; color:white; padding:20px; }
+    .container { max-width:800px; margin:auto; }
+
+    .main {
+      width:100%;
+      max-width:400px;
+      border-radius:10px;
+    }
+
+    .gallery {
+      display:flex;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+
+    .gallery img {
+      width:80px;
+      height:80px;
+      object-fit:cover;
+      border-radius:6px;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container" id="product"></div>
+
+<script>
+const id = new URLSearchParams(window.location.search).get("id");
+
+async function load() {
+  const { data } = await sb
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  const images = [data.main_image, ...(data.images || [])];
+
+  product.innerHTML = `
+    <h1>${data.name}</h1>
+
+    <img id="mainImg" class="main" src="${data.main_image}">
+
+    <div class="gallery">
+      ${images.map((img, i) => `
+        <img src="${img}" onclick="swap('${img}')">
+      `).join("")}
+    </div>
+
+    <p>${data.description || ''}</p>
+    <h2>$${data.price}</h2>
+
+    <button onclick="addToCart('${data.id}')">Buy</button>
+  `;
+}
+
+function swap(img) {
+  document.getElementById("mainImg").src = img;
+}
+
+function addToCart(id) {
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  cart.push(id);
+  localStorage.setItem("cart", JSON.stringify(cart));
+  alert("Added");
+}
+
+load();
+</script>
+
+</body>
+</html>
+
