@@ -36,8 +36,30 @@
 <h2>Products</h2>
 <div id="list"></div>
 
+<!-- EDIT MODAL -->
+<div id="editor" style="
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.85);
+  padding:40px;
+">
+  <div style="background:#222;padding:20px;max-width:400px;">
+    <h3>Edit Product</h3>
+
+    <input id="edit_name" placeholder="Name">
+    <textarea id="edit_desc" placeholder="Description"></textarea>
+    <input id="edit_price" type="number" placeholder="Price">
+    <input id="edit_stock" type="number" placeholder="Stock">
+
+    <button onclick="saveEdit()">Save</button>
+    <button onclick="closeEditor()">Close</button>
+  </div>
+</div>
+
 <script>
 const bucket = "product-images";
+let editingId = null;
 
 /* 🔐 AUTH CHECK */
 async function checkAuth() {
@@ -51,26 +73,41 @@ async function uploadImage(file) {
   const fileName = Date.now() + "-" + file.name;
 
   const { error } = await sb.storage
-    .from(bucket)
+    .from("product-images")
     .upload(fileName, file);
 
-  if (error) return null;
+  if (error) {
+    console.error(error);
+    return null;
+  }
 
-  return sb.storage.from(bucket).getPublicUrl(fileName).data.publicUrl;
+  const { data } = sb.storage
+    .from("product-images")
+    .getPublicUrl(fileName);
+
+  return data.publicUrl;
 }
 
-/* ➕ ADD PRODUCT */
+/* ➕ ADD PRODUCT (FIXED) */
 async function addProduct() {
   const file = imageFile.files[0];
   const imageUrl = file ? await uploadImage(file) : null;
 
-  await sb.from("products").insert([{
-    name: name.value,
-    description: desc.value,
-    price: price.value,
-    stock: stock.value,
+  const product = {
+    name: document.getElementById("name").value,
+    description: document.getElementById("desc").value,
+    price: Number(document.getElementById("price").value),
+    stock: Number(document.getElementById("stock").value || 0),
     main_image: imageUrl
-  }]);
+  };
+
+  const { error } = await sb.from("products").insert([product]);
+
+  if (error) {
+    console.error(error);
+    alert("Failed to add product");
+    return;
+  }
 
   load();
 }
@@ -82,49 +119,67 @@ async function load() {
   list.innerHTML = data.map(p => `
     <div class="card">
       <img src="${p.main_image || ''}">
-      <h3 contenteditable onblur="edit('${p.id}','name',this.innerText)">${p.name}</h3>
-      <p contenteditable onblur="edit('${p.id}','description',this.innerText)">${p.description || ''}</p>
 
-      <p>
-        Price: <span contenteditable onblur="edit('${p.id}','price',this.innerText)">${p.price}</span>
-      </p>
+      <h3>${p.name}</h3>
+      <p>${p.description || ''}</p>
+      <p>Price: $${p.price}</p>
+      <p>Stock: ${p.stock}</p>
 
-      <p>
-        Stock: 
-        <button onclick="stock('${p.id}',-1)">-</button>
-        ${p.stock}
-        <button onclick="stock('${p.id}',1)">+</button>
-      </p>
-
-      <button onclick="del('${p.id}')">Delete</button>
+      <button onclick="openEditor('${p.id}')">Edit</button>
+      <button onclick="del('${p.id}','${p.main_image || ''}')">Delete</button>
     </div>
   `).join("");
 }
 
-/* ✏️ EDIT INLINE */
-async function edit(id, field, value) {
-  await sb.from("products")
-    .update({ [field]: value })
-    .eq("id", id);
-}
+/* ✏️ OPEN EDITOR */
+async function openEditor(id) {
+  editingId = id;
 
-/* 📦 STOCK */
-async function stock(id, change) {
-  const { data } = await sb.from("products")
-    .select("stock")
+  const { data } = await sb
+    .from("products")
+    .select("*")
     .eq("id", id)
     .single();
 
-  await sb.from("products")
-    .update({ stock: data.stock + change })
-    .eq("id", id);
+  edit_name.value = data.name;
+  edit_desc.value = data.description;
+  edit_price.value = data.price;
+  edit_stock.value = data.stock;
 
+  document.getElementById("editor").style.display = "block";
+}
+
+/* ❌ CLOSE EDITOR */
+function closeEditor() {
+  document.getElementById("editor").style.display = "none";
+}
+
+/* 💾 SAVE EDIT */
+async function saveEdit() {
+  await sb.from("products").update({
+    name: edit_name.value,
+    description: edit_desc.value,
+    price: Number(edit_price.value),
+    stock: Number(edit_stock.value)
+  }).eq("id", editingId);
+
+  closeEditor();
   load();
 }
 
-/* 🗑 DELETE */
-async function del(id) {
+/* 🗑 DELETE (WITH IMAGE REMOVAL) */
+async function del(id, imageUrl) {
+
   await sb.from("products").delete().eq("id", id);
+
+  if (imageUrl) {
+    const fileName = imageUrl.split("/").pop();
+
+    await sb.storage
+      .from("product-images")
+      .remove([fileName]);
+  }
+
   load();
 }
 
