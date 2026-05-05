@@ -29,21 +29,14 @@
 <textarea id="desc" placeholder="Description"></textarea>
 <input id="price" type="number" placeholder="Price">
 <input id="stock" type="number" placeholder="Stock">
-<input type="file" id="imageFile">
+<input type="file" id="imageFile" multiple>
 
 <button onclick="addProduct()">Add</button>
 
 <h2>Products</h2>
 <div id="list"></div>
 
-<!-- EDIT MODAL -->
-<div id="editor" style="
-  display:none;
-  position:fixed;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,0.85);
-  padding:40px;
-">
+<div id="editor" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);padding:40px;">
   <div style="background:#222;padding:20px;max-width:400px;">
     <h3>Edit Product</h3>
 
@@ -58,47 +51,45 @@
 </div>
 
 <script>
-const bucket = "product-images";
 let editingId = null;
 
-/* 🔐 AUTH CHECK */
 async function checkAuth() {
   const { data } = await sb.auth.getUser();
   if (!data.user) window.location.href = "login.html";
 }
 checkAuth();
 
-/* 📤 UPLOAD IMAGE */
-async function uploadImage(file) {
-  const fileName = Date.now() + "-" + file.name;
+async function uploadImages(files) {
+  let urls = [];
 
-  const { error } = await sb.storage
-    .from("product-images")
-    .upload(fileName, file);
+  for (let file of files) {
+    const fileName = Date.now() + "-" + file.name;
 
-  if (error) {
-    console.error(error);
-    return null;
+    await sb.storage
+      .from("product-images")
+      .upload(fileName, file);
+
+    const { data } = sb.storage
+      .from("product-images")
+      .getPublicUrl(fileName);
+
+    urls.push(data.publicUrl);
   }
 
-  const { data } = sb.storage
-    .from("product-images")
-    .getPublicUrl(fileName);
-
-  return data.publicUrl;
+  return urls;
 }
 
-/* ➕ ADD PRODUCT (FIXED) */
 async function addProduct() {
-  const file = imageFile.files[0];
-  const imageUrl = file ? await uploadImage(file) : null;
+  const files = imageFile.files;
+  const images = files.length ? await uploadImages(files) : [];
 
   const product = {
     name: document.getElementById("name").value,
     description: document.getElementById("desc").value,
     price: Number(document.getElementById("price").value),
     stock: Number(document.getElementById("stock").value || 0),
-    main_image: imageUrl
+    main_image: images[0] || null,
+    images: images
   };
 
   const { error } = await sb.from("products").insert([product]);
@@ -112,14 +103,12 @@ async function addProduct() {
   load();
 }
 
-/* 📦 LOAD */
 async function load() {
   const { data } = await sb.from("products").select("*");
 
   list.innerHTML = data.map(p => `
     <div class="card">
       <img src="${p.main_image || ''}">
-
       <h3>${p.name}</h3>
       <p>${p.description || ''}</p>
       <p>Price: $${p.price}</p>
@@ -131,7 +120,6 @@ async function load() {
   `).join("");
 }
 
-/* ✏️ OPEN EDITOR */
 async function openEditor(id) {
   editingId = id;
 
@@ -149,12 +137,10 @@ async function openEditor(id) {
   document.getElementById("editor").style.display = "block";
 }
 
-/* ❌ CLOSE EDITOR */
 function closeEditor() {
   document.getElementById("editor").style.display = "none";
 }
 
-/* 💾 SAVE EDIT */
 async function saveEdit() {
   await sb.from("products").update({
     name: edit_name.value,
@@ -167,9 +153,7 @@ async function saveEdit() {
   load();
 }
 
-/* 🗑 DELETE (WITH IMAGE REMOVAL) */
 async function del(id, imageUrl) {
-
   await sb.from("products").delete().eq("id", id);
 
   if (imageUrl) {
@@ -183,7 +167,6 @@ async function del(id, imageUrl) {
   load();
 }
 
-/* 🚪 LOGOUT */
 async function logout() {
   await sb.auth.signOut();
   window.location.href = "login.html";
