@@ -5,7 +5,7 @@
   <title>Product</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
+  <script src="/admin/supabase.js"></script>
 
   <style>
     body {
@@ -65,17 +65,16 @@
 </div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+const id = new URLSearchParams(window.location.search).get("id");
 
 if (!id) {
-  document.getElementById("product").innerHTML = "No product ID found in URL";
+  document.getElementById("product").innerHTML = "No product ID";
 }
 
 /* LOAD PRODUCT */
 async function loadProduct() {
 
-  const { data, error } = await sb
+  const { data, error } = await window.sb
     .from("products")
     .select("*")
     .eq("id", id)
@@ -113,12 +112,12 @@ async function loadProduct() {
   `;
 }
 
-/* SWITCH IMAGE */
+/* IMAGE SWITCH */
 function swapImage(img) {
   document.getElementById("mainImg").src = img;
 }
 
-/* CART SYSTEM */
+/* CART */
 function addToCart(productId) {
   let cart = JSON.parse(localStorage.getItem("cart") || "[]");
   cart.push(productId);
@@ -131,4 +130,3 @@ loadProduct();
 
 </body>
 </html>
-
