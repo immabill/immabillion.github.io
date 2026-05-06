@@ -8,78 +8,125 @@
   <script src="supabase.js"></script>
 
   <style>
-    body { font-family: Arial; background:#111; color:white; padding:20px; }
-    .container { max-width:800px; margin:auto; }
+    body {
+      font-family: Arial;
+      background:#111;
+      color:white;
+      padding:20px;
+    }
 
-    .main {
-      width:100%;
-      max-width:400px;
-      border-radius:10px;
+    .container {
+      max-width: 900px;
+      margin: auto;
+      text-align: center;
+    }
+
+    #mainImg {
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 10px;
     }
 
     .gallery {
       display:flex;
+      justify-content:center;
       gap:10px;
-      margin-top:10px;
+      margin-top:15px;
       flex-wrap:wrap;
     }
 
     .gallery img {
-      width:80px;
-      height:80px;
+      width:70px;
+      height:70px;
       object-fit:cover;
       border-radius:6px;
       cursor:pointer;
+      opacity:0.7;
+    }
+
+    .gallery img:hover {
+      opacity:1;
+    }
+
+    button {
+      padding:12px;
+      margin-top:20px;
+      cursor:pointer;
+      font-size:16px;
     }
   </style>
 </head>
 
 <body>
 
-<div class="container" id="product"></div>
+<div class="container">
+  <div id="product">Loading...</div>
+</div>
 
 <script>
-const id = new URLSearchParams(window.location.search).get("id");
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
 
-async function load() {
-  const { data } = await sb
+if (!id) {
+  document.getElementById("product").innerHTML = "No product ID found in URL";
+}
+
+/* LOAD PRODUCT */
+async function loadProduct() {
+
+  const { data, error } = await sb
     .from("products")
     .select("*")
     .eq("id", id)
     .single();
 
-  const images = [data.main_image, ...(data.images || [])];
+  if (error || !data) {
+    console.error(error);
+    document.getElementById("product").innerHTML = "Product not found";
+    return;
+  }
 
-  product.innerHTML = `
-    <h1>${data.name}</h1>
+  const images = [
+    data.main_image,
+    ...(data.images || [])
+  ].filter(Boolean);
 
-    <img id="mainImg" class="main" src="${data.main_image}">
+  document.getElementById("product").innerHTML = `
+    <h1>${data.name || ''}</h1>
+
+    <img id="mainImg" src="${data.main_image || ''}">
 
     <div class="gallery">
-      ${images.map((img, i) => `
-        <img src="${img}" onclick="swap('${img}')">
+      ${images.map(img => `
+        <img src="${img}" onclick="swapImage('${img}')">
       `).join("")}
     </div>
 
     <p>${data.description || ''}</p>
-    <h2>$${data.price}</h2>
 
-    <button onclick="addToCart('${data.id}')">Buy</button>
+    <h2>$${data.price ?? 0}</h2>
+
+    <p>Stock: ${data.stock ?? 0}</p>
+
+    <button onclick="addToCart('${data.id}')">Add to Cart</button>
   `;
 }
 
-function swap(img) {
+/* SWITCH IMAGE */
+function swapImage(img) {
   document.getElementById("mainImg").src = img;
 }
 
-function addToCart(id) {
+/* CART SYSTEM */
+function addToCart(productId) {
   let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-  cart.push(id);
+  cart.push(productId);
   localStorage.setItem("cart", JSON.stringify(cart));
-  alert("Added");
+  alert("Added to cart");
 }
 
-load();
+loadProduct();
 </script>
 
 </body>
