@@ -1,24 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 
-  <style>
-    body { font-family: Arial; padding: 20px; background:#111; color:white; }
-    input, textarea { display:block; margin:10px 0; padding:8px; width:300px; }
-    .card { border:1px solid #333; padding:10px; margin:10px 0; }
-    img { width:80px; }
-    button { margin:5px; }
-  </style>
+<style>
+body {
+  font-family: Arial;
+  background:#0d0d0d;
+  color:white;
+  padding:20px;
+}
+
+.container {
+  max-width:1000px;
+  margin:auto;
+}
+
+input, textarea {
+  display:block;
+  margin:10px 0;
+  padding:10px;
+  width:300px;
+  background:#1a1a1a;
+  border:none;
+  color:white;
+}
+
+button {
+  padding:10px;
+  margin:5px;
+  cursor:pointer;
+  border:none;
+  background:white;
+  color:black;
+  border-radius:5px;
+}
+
+.card {
+  background:#1a1a1a;
+  padding:15px;
+  margin:10px 0;
+  border-radius:10px;
+}
+
+.row {
+  display:flex;
+  gap:15px;
+  align-items:center;
+}
+
+img {
+  width:80px;
+  height:80px;
+  object-fit:cover;
+  border-radius:6px;
+}
+</style>
 </head>
 
 <body>
 
-<h1>Inventory System</h1>
+<div class="container">
+
+<h1>Admin Dashboard</h1>
 <button onclick="logout()">Logout</button>
 
 <hr>
@@ -31,50 +79,42 @@
 <input id="stock" type="number" placeholder="Stock">
 <input type="file" id="imageFile" multiple>
 
-<button onclick="addProduct()">Add</button>
+<button onclick="addProduct()">Add Product</button>
 
 <h2>Products</h2>
 <div id="list"></div>
 
-<div id="editor" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);padding:40px;">
-  <div style="background:#222;padding:20px;max-width:400px;">
-    <h3>Edit Product</h3>
+<h2>Orders</h2>
+<div id="orders"></div>
 
-    <input id="edit_name" placeholder="Name">
-    <textarea id="edit_desc" placeholder="Description"></textarea>
-    <input id="edit_price" type="number" placeholder="Price">
-    <input id="edit_stock" type="number" placeholder="Stock">
-
-    <button onclick="saveEdit()">Save</button>
-    <button onclick="closeEditor()">Close</button>
-  </div>
 </div>
 
 <script>
-let editingId = null;
+let sbClient = sb;
 
-async function checkAuth() {
-  const { data } = await sb.auth.getUser();
-  if (!data.user) window.location.href = "login.html";
+/*AUTH*/
+async function logout() {
+  await sbClient.auth.signOut();
+  window.location.href = "login.html";
 }
-checkAuth();
 
+/*IMAGE UPLOAD*/
 async function uploadImages(files) {
   let urls = [];
 
   for (let file of files) {
-    const fileName = Date.now() + "-" + file.name;
+    const fileName = `${Date.now()}-${Math.random()}-${file.name}`;
 
-    const { error } = await sb.storage
+    const { error } = await sbClient.storage
       .from("product-images")
       .upload(fileName, file);
 
     if (error) {
-      console.error(error);
+      console.error("Upload error:", error.message);
       continue;
     }
 
-    const { data } = sb.storage
+    const { data } = sbClient.storage
       .from("product-images")
       .getPublicUrl(fileName);
 
@@ -84,6 +124,7 @@ async function uploadImages(files) {
   return urls;
 }
 
+/*ADD PRODUCT*/
 async function addProduct() {
   const files = document.getElementById("imageFile").files;
 
@@ -92,7 +133,13 @@ async function addProduct() {
 
   if (files.length > 0) {
     const uploaded = await uploadImages(files);
-    mainImage = uploaded[0] || null;
+
+    if (!uploaded.length) {
+      alert("Image upload failed");
+      return;
+    }
+
+    mainImage = uploaded[0];
     extras = uploaded.slice(1);
   }
 
@@ -105,87 +152,115 @@ async function addProduct() {
     images: extras
   };
 
-  const { error } = await sb.from("products").insert([product]);
+  const { error } = await sbClient.from("products").insert([product]);
 
   if (error) {
     console.error(error);
-    alert("Error adding product");
+    alert(error.message);
     return;
   }
 
-  load();
+  loadProducts();
 }
 
-async function load() {
-  const { data } = await sb.from("products").select("*");
+/*LOAD PRODUCTS*/
+async function loadProducts() {
+  const { data, error } = await sbClient.from("products").select("*");
 
-  list.innerHTML = data.map(p => `
-    <div class="card">
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const list = document.getElementById("list");
+
+  list.innerHTML = (data || []).map(p => `
+    <div class="card row">
       <img src="${p.main_image || ''}">
-      <h3>${p.name || ''}</h3>
-      <p>${p.description || ''}</p>
-      <p>Price: $${p.price}</p>
-      <p>Stock: ${p.stock}</p>
+      <div>
+        <h3>${p.name || 'No name'}</h3>
+        <p>$${p.price || 0}</p>
+        <p>Stock: ${p.stock ?? 0}</p>
 
-      <button onclick="openEditor('${p.id}')">Edit</button>
-      <button onclick="del('${p.id}','${p.main_image || ''}')">Delete</button>
+        <button onclick="del('${p.id}', '${p.main_image || ''}')">Delete</button>
+      </div>
     </div>
   `).join("");
 }
 
-async function openEditor(id) {
-  editingId = id;
-
-  const { data } = await sb
-    .from("products")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  document.getElementById("edit_name").value = data.name || "";
-  document.getElementById("edit_desc").value = data.description || "";
-  document.getElementById("edit_price").value = data.price || 0;
-  document.getElementById("edit_stock").value = data.stock || 0;
-
-  document.getElementById("editor").style.display = "block";
-}
-
-function closeEditor() {
-  document.getElementById("editor").style.display = "none";
-}
-
-async function saveEdit() {
-  await sb.from("products").update({
-    name: document.getElementById("edit_name").value,
-    description: document.getElementById("edit_desc").value,
-    price: Number(document.getElementById("edit_price").value),
-    stock: Number(document.getElementById("edit_stock").value)
-  }).eq("id", editingId);
-
-  closeEditor();
-  load();
-}
-
+/*DELETE PRODUCT*/
 async function del(id, imageUrl) {
-  await sb.from("products").delete().eq("id", id);
 
-  if (imageUrl) {
-    const fileName = imageUrl.split("/").pop();
+  console.log("Deleting:", { id, imageUrl });
 
-    await sb.storage
-      .from("product-images")
-      .remove([fileName]);
+  // 1. DELETE DB ROW
+  const { error } = await sb.from("products").delete().eq("id", id);
+
+  if (error) {
+    console.error("DB delete failed:", error.message);
+    return;
   }
 
-  load();
+  // 2. DELETE IMAGE (SAFE PARSING)
+  if (imageUrl) {
+    try {
+      const match = imageUrl.match(/product-images\/(.+)$/);
+
+      if (!match) {
+        console.error("Could not parse image path:", imageUrl);
+        return;
+      }
+
+      const filePath = match[1];
+
+      const { error: storageError } = await sb.storage
+        .from("product-images")
+        .remove([filePath]);
+
+      if (storageError) {
+        console.error("Storage delete failed:", storageError.message);
+      }
+
+    } catch (e) {
+      console.error("Delete crash:", e);
+    }
+  }
+
+  loadProducts();
 }
 
-async function logout() {
-  await sb.auth.signOut();
-  window.location.href = "login.html";
+/*LOAD ORDERS*/
+async function loadOrders() {
+  const { data } = await sbClient.from("orders")
+    .select("*")
+    .order("created_at", { ascending:false });
+
+  const orders = document.getElementById("orders");
+
+  orders.innerHTML = (data || []).map(o => `
+    <div class="card">
+      <h3>${o.name || 'Customer'}</h3>
+      <p>${o.email || ''}</p>
+      <p>Total: $${o.total || 0}</p>
+      <p>Status: ${o.status || 'pending'}</p>
+
+      <button onclick="markShipped('${o.id}')">Mark Shipped</button>
+    </div>
+  `).join("");
 }
 
-load();
+/*MARK SHIPPED*/
+async function markShipped(id) {
+  await sbClient.from("orders")
+    .update({ status: "shipped" })
+    .eq("id", id);
+
+  loadOrders();
+}
+
+/*INIT*/
+loadProducts();
+loadOrders();
 </script>
 
 </body>

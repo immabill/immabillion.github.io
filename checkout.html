@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Checkout</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin/supabase.js"></script>
+
+<style>
+body { font-family: Arial; background:#111; color:white; padding:20px; }
+.container { max-width:600px; margin:auto; }
+input, textarea { width:100%; padding:10px; margin:10px 0; }
+button { padding:12px; width:100%; cursor:pointer; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>Checkout</h1>
+
+<input id="name" placeholder="Full Name">
+<input id="email" placeholder="Email">
+<textarea id="address" placeholder="Shipping Address"></textarea>
+
+<button onclick="placeOrder()">Place Order</button>
+</div>
+
+<script>
+async function placeOrder() {
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+  const { data } = await sb.from("products").select("*");
+
+  let items = data.filter(p => cart.includes(p.id));
+
+  let total = items.reduce((sum, p) => sum + Number(p.price), 0);
+
+  await sb.from("orders").insert([{
+    items: items,
+    total: total,
+    name: name.value,
+    email: email.value,
+    address: address.value
+  }]);
+
+  localStorage.removeItem("cart");
+
+  alert("Order placed!");
+  window.location.href = "/";
+}
+</script>
+
+</body>
+</html>

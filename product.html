@@ -5,32 +5,67 @@
   <title>Product</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/admin/supabase.js"></script>
+  <script src="admin/supabase.js"></script>
 
   <style>
     body {
-      font-family: Arial;
-      background:#111;
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:#0d0d0d;
       color:white;
-      padding:20px;
     }
 
     .container {
-      max-width: 900px;
-      margin: auto;
-      text-align: center;
+      max-width:1200px;
+      margin:auto;
+      padding:40px 20px;
+      display:flex;
+      gap:60px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+      justify-content:center;
+      animation: fadeIn 0.6s ease;
     }
 
-    #mainImg {
-      width: 300px;
-      height: 300px;
-      object-fit: cover;
-      border-radius: 10px;
+    @keyframes fadeIn {
+      from { opacity:0.7; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+
+    /* LEFT SIDE */
+    .left {
+      flex:1;
+      min-width:300px;
+      max-width:500px;
+    }
+
+    .main-img {
+      opacity:1;
+      width:100%;
+      border-radius:12px;
+      overflow:hidden;
+      cursor:zoom-in;
+      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 1));
+      filter: drop-shadow(0px 0px 10px rgba(184, 184, 184, 0.7));
+    }
+
+    .main-img img {
+      opacity:1;
+      width:100%;
+      transition: transform 0.4s ease;
+      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 1));
+      filter: drop-shadow(0px 0px 10px rgba(184, 184, 184, 0.7));
+    }
+
+    .main-img:hover img {
+      opacity:1;
+      transform: scale(1.1);
+      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 1));
+      filter: drop-shadow(0px 0px 10px rgba(184, 184, 184, 0.7));
     }
 
     .gallery {
       display:flex;
-      justify-content:center;
       gap:10px;
       margin-top:15px;
       flex-wrap:wrap;
@@ -42,47 +77,102 @@
       object-fit:cover;
       border-radius:6px;
       cursor:pointer;
-      opacity:0.7;
+      opacity:0.4;
+      transition:0.2s;
+      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 1));
+      filter: drop-shadow(0px 0px 10px rgba(184, 184, 184, 0.7));
     }
 
     .gallery img:hover {
       opacity:1;
+      transform:scale(1.05);
+    }
+
+    /* RIGHT SIDE */
+    .right {
+      flex:1;
+      min-width:280px;
+      max-width:500px;
+    }
+
+    h1 {
+      font-size:28px;
+      margin-bottom:10px;
+    }
+
+    .price {
+      font-size:24px;
+      margin:15px 0;
+      font-weight:bold;
+    }
+
+    .desc {
+      color:#ccc;
+      line-height:1.5;
+      margin-bottom:20px;
+    }
+
+    .stock {
+      margin-bottom:20px;
+      color:#aaa;
     }
 
     button {
-      padding:12px;
-      margin-top:20px;
-      cursor:pointer;
+      width:100%;
+      padding:14px;
       font-size:16px;
+      background:white;
+      color:black;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      transition:0.2s;
+    }
+
+    button:hover {
+      opacity:0.8;
+      transform:scale(1.02);
+    }
+
+    .loading {
+      text-align:center;
+      margin-top:100px;
+      font-size:20px;
+      opacity:0.9;
+    }
+
+    @media (max-width:800px) {
+      .container {
+        flex-direction:column;
+        align-items:center;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<div class="container">
-  <div id="product">Loading...</div>
-</div>
+<div id="app" class="loading">Loading product...</div>
 
 <script>
 const id = new URLSearchParams(window.location.search).get("id");
 
-if (!id) {
-  document.getElementById("product").innerHTML = "No product ID";
+if (!window.sb) {
+  document.getElementById("app").innerHTML = "Database not connected";
+  throw new Error("Supabase not loaded");
 }
 
-/* LOAD PRODUCT */
 async function loadProduct() {
 
-  const { data, error } = await window.sb
+  const { data, error } = await sb
     .from("products")
     .select("*")
     .eq("id", id)
     .single();
 
   if (error || !data) {
+    document.getElementById("app").innerHTML = "Product not found";
     console.error(error);
-    document.getElementById("product").innerHTML = "Product not found";
     return;
   }
 
@@ -91,38 +181,49 @@ async function loadProduct() {
     ...(data.images || [])
   ].filter(Boolean);
 
-  document.getElementById("product").innerHTML = `
-    <h1>${data.name || ''}</h1>
+  document.getElementById("app").innerHTML = `
+    <div class="container">
 
-    <img id="mainImg" src="${data.main_image || ''}">
+      <div class="left">
+        <div class="main-img">
+          <img id="mainImg" src="${data.main_image}">
+        </div>
 
-    <div class="gallery">
-      ${images.map(img => `
-        <img src="${img}" onclick="swapImage('${img}')">
-      `).join("")}
+        <div class="gallery">
+          ${images.map(img => `
+            <img src="${img}" onclick="setImage('${img}')">
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="right">
+        <h1>${data.name || ''}</h1>
+
+        <div class="price">$${data.price ?? 0}</div>
+
+        <div class="desc">${data.description || ''}</div>
+
+        <div class="stock">Stock: ${data.stock ?? 0}</div>
+
+        <button onclick="addToCart('${data.id}')">Add to Cart</button>
+      </div>
+
     </div>
-
-    <p>${data.description || ''}</p>
-
-    <h2>$${data.price ?? 0}</h2>
-
-    <p>Stock: ${data.stock ?? 0}</p>
-
-    <button onclick="addToCart('${data.id}')">Add to Cart</button>
   `;
 }
 
-/* IMAGE SWITCH */
-function swapImage(img) {
+function setImage(img) {
   document.getElementById("mainImg").src = img;
 }
 
-/* CART */
-function addToCart(productId) {
+function addToCart(id) {
   let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-  cart.push(productId);
+
+  cart.push(id);
+
   localStorage.setItem("cart", JSON.stringify(cart));
-  alert("Added to cart");
+
+  window.location.href = "cart.html";
 }
 
 loadProduct();

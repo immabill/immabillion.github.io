@@ -1,97 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mama I'm A Billionaire</title>
-    <style>
-        /* Reset styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<title>Cart</title>
 
-        body, html {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            cursor: pointer;
-        }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin/supabase.js"></script>
 
-        /* Full-screen background GIF */
-        #bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -2;
-        }
-
-        /* Spinning GIF stays centered */
-        #spin {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 400px; /* Default size on desktop */
-            height: auto;
-            z-index: -1;
-        }
-
-        /* Typewriter Text */
-        #text {
-            position: absolute;
-            top: 75%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            text-shadow: 
-                -1px -1px 0 black,
-                1px -1px 0 black,
-                -1px 1px 0 black,
-                1px 1px 0 black;
-            font-size: 2em;
-            font-family: 'Courier New', Courier, monospace;
-            white-space: nowrap;
-            border-right: 2px solid white;
-            overflow: hidden;
-            width: 7ch;
-            animation: typing 2s steps(30) forwards, blink 1s infinite step-end alternate;
-            text-align: center;
-        }
-
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 23ch }
-        }
-
-        @keyframes blink {
-            from { border-color: white }
-            to { border-color: transparent }
-        }
-
-        /* Mobile adjustments */
-        @media (max-width: 700px) {
-            #spin {
-                width: 650px;
-            }
-
-            #text {
-                font-size: 1.5em;
-            }
-        }
-    </style>
+<style>
+body { font-family: Arial; background:#111; color:white; padding:20px; }
+.container { max-width:800px; margin:auto; }
+.item { display:flex; gap:15px; margin-bottom:20px; align-items:center; }
+.item img { width:80px; border-radius:6px; }
+button { padding:10px; cursor:pointer; }
+.total { font-size:20px; margin-top:20px; }
+</style>
 </head>
-<body>
-    <!-- Full-screen background -->
-    <img id="bg" src="background.gif" alt="Background">
 
-    <!-- Spinning GIF -->
-    <img id="spin" src="https://raw.githubusercontent.com/Nulvyn-Visuals/mamaimabillionare.github.io/refs/heads/main/Cart.png" alt="Spinning">
-    <div id="text">[OPPS SORRY YOUR EARLY]</div>
+<body>
+
+<div class="container">
+<h1>Your Cart</h1>
+
+<div id="cart"></div>
+
+<div class="total" id="total"></div>
+
+<button onclick="checkout()">Checkout</button>
+</div>
+
+<script>
+async function loadCart() {
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+  if (cart.length === 0) {
+    document.getElementById("cart").innerHTML = "Cart is empty";
+    return;
+  }
+
+  const { data } = await sb.from("products").select("*");
+
+  let items = data.filter(p => cart.includes(p.id));
+
+  let total = 0;
+
+  document.getElementById("cart").innerHTML = items.map(p => {
+    total += Number(p.price);
+    return `
+      <div class="item">
+        <img src="${p.main_image}">
+        <div>
+          <h3>${p.name}</h3>
+          <p>$${p.price}</p>
+          <button onclick="removeItem('${p.id}')">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("total").innerText = "Total: $" + total;
+}
+
+function removeItem(id) {
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  cart = cart.filter(i => i !== id);
+  localStorage.setItem("cart", JSON.stringify(cart));
+  loadCart();
+}
+
+function checkout() {
+  window.location.href = "checkout.html";
+}
+
+loadCart();
+</script>
 
 </body>
 </html>
