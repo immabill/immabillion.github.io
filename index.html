@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Countdown</title>
-
+    <title>Mama I'm A Billionaire</title>
     <style>
+        /* Reset styles */
         * {
             margin: 0;
             padding: 0;
@@ -19,7 +19,7 @@
             cursor: pointer;
         }
 
-        /* Background */
+        /* Full-screen background GIF */
         #bg {
             position: fixed;
             top: 0;
@@ -30,93 +30,76 @@
             z-index: -2;
         }
 
-        /* Spinning image */
+        /* Spinning GIF stays centered */
         #spin {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 1300px;
+            height: auto;
             z-index: -1;
         }
 
-        /* Countdown text */
-        #countdown {
+        /* Typewriter Text */
+        #text {
             position: absolute;
             top: 75%;
             left: 50%;
             transform: translate(-50%, -50%);
             color: white;
-            font-family: 'Courier New', monospace;
             text-shadow: 
                 -1px -1px 0 black,
                 1px -1px 0 black,
                 -1px 1px 0 black,
                 1px 1px 0 black;
-
-            font-size: clamp(18px, 5vw, 48px);
+            font-size: 2em;
+            font-family: 'Courier New', Courier, monospace;
             white-space: nowrap;
+            border-right: 2px solid white;
+            overflow: hidden;
+            width: 7ch;
+            animation: typing 2s steps(15) forwards, blink 1s infinite step-end alternate;
             text-align: center;
         }
 
-        /* Tablet */
-        @media (max-width: 1000px) {
-            #spin {
-                width: 900px;
-            }
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 7ch }
         }
 
-        /* Phone */
+        @keyframes blink {
+            from { border-color: white }
+            to { border-color: transparent }
+        }
+
+        /* Mobile adjustments */
         @media (max-width: 700px) {
             #spin {
-                width: 450px;
+                width: 650px;
             }
-        }
 
-        /* Small phone */
-        @media (max-width: 400px) {
-            #spin {
-                width: 500px;
+            #text {
+                font-size: 1.5em;
             }
         }
     </style>
 </head>
-
 <body>
+    <!-- Full-screen background -->
+    <img id="bg" src="background.gif" alt="Background">
 
-<img id="bg" src="background.gif" alt="Background">
-<img id="spin" src="spin.gif" alt="Spinning">
+    <!-- Spinning GIF -->
+    <img id="spin" src="spin.gif" alt="Spinning">
 
-<div id="countdown">Loading...</div>
+    <!-- Typewriter Text -->
+    <div id="text">[Enter]</div>
 
-<script>
-    // 🔥 TARGET DATE (May 7th, 2026 at 4PM Central Daylight Time)
-    const targetDate = new Date("2026-05-07T16:00:00-05:00");
-
-    const countdownEl = document.getElementById("countdown");
-
-    function updateCountdown() {
-        const now = new Date();
-        const diff = targetDate - now;
-
-        if (diff <= 0) {
-            countdownEl.innerText = "[Enter]";
-            return;
-        }
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        const minutes = Math.floor((diff / (1000 * 60)) % 60);
-        const seconds = Math.floor((diff / 1000) % 60);
-
-        countdownEl.innerText = 
-            `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    }
-
-    setInterval(updateCountdown, 1000);
-    updateCountdown();
-
-</script>
-
+    <script>
+        // On click or tap, go to home page
+        document.body.addEventListener("click", () => {
+            window.location.href = "home.html";
+        });
+    </script>
 </body>
 </html>
