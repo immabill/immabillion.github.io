@@ -4,8 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Mama I'm a Billionaire</title>
+
 <style>
-/* Page reset */
+/* Reset */
 html, body {
   margin: 0;
   padding: 0;
@@ -25,19 +26,8 @@ html, body {
   z-index: -2;
 }
 
-.spin {
-  display: block;
-  margin: 40px auto;
-  width: 310px;
-  height: auto;
-  object-fit: contain;
-  z-index: 1;
-  position: relative;
-}
-
-/* Header */
+/* HEADER */
 header {
-  backdrop-filter: none; 
   position: fixed;
   top: 0;
   left: 0;
@@ -51,7 +41,6 @@ header {
   z-index: 100;
   backdrop-filter: blur(4px);
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 header .logo {
@@ -60,10 +49,7 @@ header .logo {
   top: 50%;
   transform: translate(-50%, -50%);
   max-width: 180px;
-  height: auto;
-  z-index: 101;
   pointer-events: none;
-  mix-blend-mode: difference;
   filter: invert(1) contrast(200%) brightness(200%);
 }
 
@@ -73,140 +59,106 @@ header .cart {
   top: 50%;
   transform: translate(-50%, -50%);
   max-width: 60px;
-  height: auto;
-  z-index: 101;
   cursor: pointer;
 }
 
-item {
-  cursor: pointer;
-}
-
-/* Nav */
-nav {
-  display: flex;
-  gap: 24px;
-  z-index: 12;
-}
-
-nav a {
-  color: rgba(255,255,255,0);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 16px;
-  white-space: nowrap;
-}
-
-/* Prevent header overlap */
+/* spacing for header */
 body {
   padding-top: 90px;
 }
 
-/* Footer */
+/* HERO SPIN */
+.spin {
+  display: block;
+  margin: 40px auto;
+  width: 310px;
+}
+
+/* ========================= */
+/* PRODUCTS GRID */
+/* ========================= */
+
+.services {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 30px;
+  justify-items: center;
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+/* product wrapper (NO visible container) */
+.service {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ONLY IMAGE HAS EFFECTS */
+.service img {
+  width: clamp(140px, 18vw, 220px);
+  height: clamp(140px, 18vw, 220px);
+  object-fit: contain;
+  border-radius: 30px;
+
+  /* consistent glow */
+  filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.7));
+
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* hover effect */
+.service img:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.55);
+}
+
+/* ABOUT */
+#About {
+  text-align: center;
+  font-size: 17px;
+  padding: 40px 10%;
+  font-family: monospace;
+}
+
+/* FOOTER */
 footer {
   text-align: center;
   padding: 20px;
-  background-color: rgba(0, 0, 0, 0.4);
-  color: white;
+  background-color: rgba(0,0,0,0.4);
   font-size: 14px;
-  line-height: 1.6;
   margin-top: 40px;
 }
 
 footer a {
-  color: #fff;
+  color: white;
   text-decoration: none;
-  margin: 0 6px;
 }
 
-footer a:hover {
-  text-decoration: underline;
-}
-
-/* Heading */
-.hero-text {
-  display: block;
-  width: 100%;
-  color: #fff;
-  font-size: 2.6rem;
-  font-weight: 800;
-  margin: 28px 0 36px;
-  text-shadow: 0 2px 6px rgba(0,0,0,0);
-}
-
-.move {
-  width: 50%;
-}
-
-
-.services {
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 20px;
-  border-radius: 15px;
-
-  display: grid;
-
-  grid-template-columns: repeat(auto-fit, 160px);
-
-  justify-content: center;   
-  gap: 20px;
-
-  max-width: 1000px;
-  margin: 40px auto;
-}
-
-/* each product */
-.service {
-  display: flex;
-  justify-content: center;
-}
-
-/* IMAGE */
-.service img {
-  width: 220px;
-  height: 220px;
-  object-fit: contain;
-  border-radius: 8px;
-  display: block;
-  filter: drop-shadow(0px 0px 10px rgba(255, 255, 255, 0.7));
-}
-/* Optional nicer hover */
-.service img {
-  transition: transform 0.3s ease, filter 0.3s ease;
-}
-
-.service:hover img {
-  transform: scale(1.08);
-  filter: brightness(1.1);
-  filter: drop-shadow(0px 0px 10px rgba(255, 255, 255, 0.7));
-}
-
-/* ========================= */
-/* Responsive */
-/* ========================= */
-
-@media (max-width: 880px) {
-  header { padding: 18px 24px; min-height: 110px; }
-  .inverted-background { width: 220px; }
-  nav a { font-size: 16px; margin-left: 18px; }
-  .hero-text { font-size: 2rem; }
-  .services { gap: 18px; }
-}
-
+/* MOBILE FIXES */
 @media (max-width: 520px) {
-  header { padding: 12px 16px; min-height: 92px; }
-  .inverted-background { width: 160px; top: 46%; }
-  nav a { font-size: 14px; margin-left: 12px; }
-  .hero-text { font-size: 1.6rem; margin-top: 18px; }
-
-  .service {
-    width: 160px;
+  header {
+    padding: 0 16px;
   }
 
-  .service img {
-    width: 100%;
+  header .logo {
+    max-width: 140px;
+  }
+
+  header .cart {
+    max-width: 45px;
+  }
+
+  .spin {
+    width: 220px;
+  }
+
+  .services {
+    gap: 18px;
   }
 }
+
 </style>
 </head>
 
@@ -215,35 +167,33 @@ footer a:hover {
 const sb = window.supabase.createClient(
   "https://lgbhuuamjoetubdyxecx.supabase.co",
   "sb_publishable_Wpmh3yxwlyWaonDgSnNMcw_qGp_HjqL"
-);7
+);
 </script>
 
 <body>
-  <!-- Background GIF -->
-  <img id="bg" src="background.gif" alt="Background">
 
-  <!-- Header -->
+<!-- BACKGROUND -->
+<img id="bg" src="background.gif" alt="bg">
+
+<!-- HEADER -->
 <header>
-  <img src="Mama-Bill.png" alt="Mama I'm a Billionaire" class="logo">
-
-  <nav>
-    <a href="cart.html">
-      <img src="Cart.png" alt="Cart" class="cart">
-    </a>
-  </nav>
+  <img src="Mama-Bill.png" class="logo">
+  <a href="cart.html">
+    <img src="Cart.png" class="cart">
+  </a>
 </header>
+
+<!-- PRODUCTS -->
+<section>
+  <div class="services" id="products"></div>
+</section>
 
 <script>
 async function loadProducts() {
-  const { data, error } = await sb
-    .from("products")
-    .select("*");
-
+  const { data, error } = await sb.from("products").select("*");
   if (error) return console.error(error);
 
-  const container = document.getElementById("products");
-
-  container.innerHTML = data.map(p => `
+  document.getElementById("products").innerHTML = (data || []).map(p => `
     <div class="service">
       <a href="product.html?id=${p.id}">
         <img src="${p.main_image || ''}">
@@ -255,35 +205,29 @@ async function loadProducts() {
 loadProducts();
 </script>
 
-
-<!-- Services Section -->
-<section id="services">
-  <div class="services" id="products"></div>
-</section>
-
-
-  </section>
-
+<!-- ABOUT -->
 <section id="About">
-<h2 style="font-family: monospace, sans-serif; font-size: 20px; color: white; text-align: center;">About “Mama I’m a Billionaire”</h2>
-
-    <p style="font-family: monospace, sans-serif; font-size: 17px; color: white; text-align: center; padding-left: 10%; padding-right: 10%;">“Mama I’m a Billionaire” isn’t just a name it’s a quiet promise. It’s for the days when nothing feels certain, but you keep going anyway. It’s about believing that one day, all the long nights, risks, and sacrifices will turn into something real. Not just success for yourself, but a moment you can share—when you finally look your mom and dad in the eyes and say it, not as a dream, but as the truth you built.</p>
-
-    <p style="font-family: monospace, sans-serif; font-size: 17px; color: white; text-align: center;">- Lukas Mieliauskas</p>
-    </section>
-
-
-<section id="move">
-  <img src="move.gif" alt="Mama I'm a Billionaire" class="spin">
+  <h2>Mama I’m a Billionaire</h2>
+  <p>
+    “Mama I’m a Billionaire” isn’t just a name it’s a quiet promise. It’s for the days when nothing feels certain, but you keep going anyway. It’s about believing that one day, all the long nights, risks, and sacrifices will turn into something real. Not just success for yourself, but a moment you can share—when you finally look your mom and dad in the eyes and say it, not as a dream, but as the truth you built.
+  </p>
+  <p>- Lukas Mieliauskas</p>
 </section>
 
+<!-- SPIN IMAGE -->
+<section>
+  <img src="move.gif" class="spin">
+</section>
+
+<!-- FOOTER -->
   <footer>
-    <p>MMB © | Nulvyn © | Servers With GitHub Pages | Website By: Kuba Kieca | Business By: Lukas Mieliauskas</p>
+    <p>MMB © | Nulvyn © | Servers With GitHub Pages | Website By: Jakob Kieca | Business By: Lukas Mieliauskas</p>
     <div>
       <a href="https://www.instagram.com/nulvyn_visuals/" target="_blank">Instagram</a> |
       <a href="https://www.tiktok.com/@the_butter_guy" target="_blank">TikTok</a> |
       <a href="mailto:lmieliauskas62@gmail.com">lmieliauskas62@gmail.com</a>
     </div>
   </footer>
+
 </body>
 </html>

@@ -51,6 +51,7 @@ button {
   display:flex;
   gap:15px;
   align-items:center;
+  flex-wrap:wrap;
 }
 
 img {
@@ -73,10 +74,10 @@ img {
 
 <h2>Add Product</h2>
 
-<input id="name" placeholder="Name">
-<textarea id="desc" placeholder="Description"></textarea>
-<input id="price" type="number" placeholder="Price">
-<input id="stock" type="number" placeholder="Stock">
+<input id="product_name" placeholder="Name">
+<textarea id="product_desc" placeholder="Description"></textarea>
+<input id="product_price" type="number" placeholder="Price">
+<input id="product_stock" type="number" placeholder="Stock">
 <input type="file" id="imageFile" multiple>
 
 <button onclick="addProduct()">Add Product</button>
@@ -84,37 +85,60 @@ img {
 <h2>Products</h2>
 <div id="list"></div>
 
+<hr>
+
 <h2>Orders</h2>
 <div id="orders"></div>
 
 </div>
 
-<script>
-let sbClient = sb;
+<!-- EDIT MODAL -->
+<div id="editBox" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000a;padding:40px;">
+  <div style="background:#1a1a1a;padding:20px;max-width:600px;max-height:90vh;overflow:auto;">
+    <h3>Edit Product</h3>
 
-/*AUTH*/
+    <input id="edit_name">
+    <textarea id="edit_desc"></textarea>
+    <input id="edit_price" type="number">
+    <input id="edit_stock" type="number">
+
+    <h4>Main Image</h4>
+    <img id="edit_main_preview" style="width:120px;height:120px;object-fit:cover;">
+
+    <h4>Gallery</h4>
+    <div id="edit_gallery"></div>
+
+    <input type="file" id="edit_upload" multiple>
+
+    <button onclick="uploadNewImages()">Upload New Images</button>
+    <button onclick="saveEdit()">Save</button>
+    <button onclick="closeEdit()">Close</button>
+  </div>
+</div>
+
+<script>
+
+let editingId = null;
+let editingProduct = null;
+
+/* AUTH */
 async function logout() {
-  await sbClient.auth.signOut();
+  await sb.auth.signOut();
   window.location.href = "login.html";
 }
 
-/*IMAGE UPLOAD*/
+/* UPLOAD IMAGES */
 async function uploadImages(files) {
   let urls = [];
 
   for (let file of files) {
-    const fileName = `${Date.now()}-${Math.random()}-${file.name}`;
+    const fileName = `${Date.now()}-${file.name}`;
 
-    const { error } = await sbClient.storage
+    await sb.storage
       .from("product-images")
       .upload(fileName, file);
 
-    if (error) {
-      console.error("Upload error:", error.message);
-      continue;
-    }
-
-    const { data } = sbClient.storage
+    const { data } = sb.storage
       .from("product-images")
       .getPublicUrl(fileName);
 
@@ -124,143 +148,181 @@ async function uploadImages(files) {
   return urls;
 }
 
-/*ADD PRODUCT*/
+/* ADD PRODUCT */
 async function addProduct() {
-  const files = document.getElementById("imageFile").files;
 
-  let mainImage = null;
-  let extras = [];
+  const name = product_name.value.trim();
+  const description = product_desc.value.trim();
+  const price = Number(product_price.value);
+  const stock = Number(product_stock.value || 0);
 
-  if (files.length > 0) {
-    const uploaded = await uploadImages(files);
+  if (!name) {
+    alert("Product name is required");
+    return;
+  }
 
-    if (!uploaded.length) {
-      alert("Image upload failed");
-      return;
-    }
+  let uploaded = [];
 
-    mainImage = uploaded[0];
-    extras = uploaded.slice(1);
+  if (imageFile.files.length > 0) {
+    uploaded = await uploadImages(imageFile.files);
   }
 
   const product = {
-    name: document.getElementById("name").value,
-    description: document.getElementById("desc").value,
-    price: Number(document.getElementById("price").value),
-    stock: Number(document.getElementById("stock").value || 0),
-    main_image: mainImage,
-    images: extras
+    name,
+    description,
+    price,
+    stock,
+    main_image: uploaded[0] || null,
+    extra_images: uploaded.slice(1)
   };
 
-  const { error } = await sbClient.from("products").insert([product]);
+  const { error } = await sb.from("products").insert([product]);
 
   if (error) {
-    console.error(error);
     alert(error.message);
     return;
   }
 
+  product_name.value = "";
+  product_desc.value = "";
+  product_price.value = "";
+  product_stock.value = "";
+  imageFile.value = "";
+
   loadProducts();
 }
 
-/*LOAD PRODUCTS*/
+/* LOAD PRODUCTS */
 async function loadProducts() {
-  const { data, error } = await sbClient.from("products").select("*");
 
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  const list = document.getElementById("list");
+  const { data } = await sb.from("products").select("*");
 
   list.innerHTML = (data || []).map(p => `
     <div class="card row">
       <img src="${p.main_image || ''}">
       <div>
-        <h3>${p.name || 'No name'}</h3>
-        <p>$${p.price || 0}</p>
-        <p>Stock: ${p.stock ?? 0}</p>
+        <h3>${p.name}</h3>
+        <p>$${p.price}</p>
+        <p>Stock: ${p.stock}</p>
 
-        <button onclick="del('${p.id}', '${p.main_image || ''}')">Delete</button>
+        <button onclick="openEdit('${p.id}')">Edit</button>
+        <button onclick="deleteProduct('${p.id}')">Delete</button>
       </div>
     </div>
   `).join("");
 }
 
-/*DELETE PRODUCT*/
-async function del(id, imageUrl) {
-
-  console.log("Deleting:", { id, imageUrl });
-
-  // 1. DELETE DB ROW
-  const { error } = await sb.from("products").delete().eq("id", id);
-
-  if (error) {
-    console.error("DB delete failed:", error.message);
-    return;
-  }
-
-  // 2. DELETE IMAGE (SAFE PARSING)
-  if (imageUrl) {
-    try {
-      const match = imageUrl.match(/product-images\/(.+)$/);
-
-      if (!match) {
-        console.error("Could not parse image path:", imageUrl);
-        return;
-      }
-
-      const filePath = match[1];
-
-      const { error: storageError } = await sb.storage
-        .from("product-images")
-        .remove([filePath]);
-
-      if (storageError) {
-        console.error("Storage delete failed:", storageError.message);
-      }
-
-    } catch (e) {
-      console.error("Delete crash:", e);
-    }
-  }
-
+/* DELETE PRODUCT */
+async function deleteProduct(id) {
+  await sb.from("products").delete().eq("id", id);
   loadProducts();
 }
 
-/*LOAD ORDERS*/
-async function loadOrders() {
-  const { data } = await sbClient.from("orders")
+/* OPEN EDIT */
+async function openEdit(id) {
+
+  editingId = id;
+
+  const { data } = await sb.from("products")
     .select("*")
-    .order("created_at", { ascending:false });
+    .eq("id", id)
+    .single();
 
-  const orders = document.getElementById("orders");
+  editingProduct = data;
 
-  orders.innerHTML = (data || []).map(o => `
-    <div class="card">
-      <h3>${o.name || 'Customer'}</h3>
-      <p>${o.email || ''}</p>
-      <p>Total: $${o.total || 0}</p>
-      <p>Status: ${o.status || 'pending'}</p>
+  edit_name.value = data.name;
+  edit_desc.value = data.description;
+  edit_price.value = data.price;
+  edit_stock.value = data.stock;
 
-      <button onclick="markShipped('${o.id}')">Mark Shipped</button>
-    </div>
+  renderEditImages();
+  editBox.style.display = "block";
+}
+
+/* RENDER IMAGES */
+function renderEditImages() {
+
+  const main = editingProduct.main_image;
+  const extras = editingProduct.extra_images || [];
+
+  edit_main_preview.src = main || "";
+
+  const all = [main, ...extras].filter(Boolean);
+
+  edit_gallery.innerHTML = all.map(url => `
+    <img src="${url}">
   `).join("");
 }
 
-/*MARK SHIPPED*/
-async function markShipped(id) {
-  await sbClient.from("orders")
-    .update({ status: "shipped" })
+/* SAVE EDIT */
+async function saveEdit() {
+
+  await sb.from("products").update({
+    name: edit_name.value,
+    description: edit_desc.value,
+    price: Number(edit_price.value),
+    stock: Number(edit_stock.value)
+  }).eq("id", editingId);
+
+  closeEdit();
+  loadProducts();
+}
+
+/* CLOSE EDIT */
+function closeEdit() {
+  editBox.style.display = "none";
+}
+
+/* LOAD ORDERS (FIXED WITH ADDRESS) */
+async function loadOrders() {
+
+  const { data } = await sb.from("orders")
+    .select("*")
+    .order("created_at", { ascending:false });
+
+  orders.innerHTML = (data || []).map(o => {
+
+    const items = Array.isArray(o.items)
+      ? o.items.map(i => i.name).join(", ")
+      : "";
+
+    return `
+      <div class="card">
+        <h3>${o.name || "No Name"}</h3>
+        <p>Email: ${o.email || ""}</p>
+
+        <p>Address: ${o.address || "No address provided"}</p>
+
+        <p>Total: $${o.total || 0}</p>
+        <p>Items: ${items}</p>
+        <p>Status: ${o.status || "pending"}</p>
+
+        <button onclick="shipOrder('${o.id}')">Mark Shipped</button>
+        <button onclick="deleteOrder('${o.id}')">Delete</button>
+      </div>
+    `;
+  }).join("");
+}
+
+/* SHIP ORDER */
+async function shipOrder(id) {
+  await sb.from("orders")
+    .update({ status:"shipped" })
     .eq("id", id);
 
   loadOrders();
 }
 
-/*INIT*/
+/* DELETE ORDER */
+async function deleteOrder(id) {
+  await sb.from("orders").delete().eq("id", id);
+  loadOrders();
+}
+
+/* INIT */
 loadProducts();
 loadOrders();
+
 </script>
 
 </body>

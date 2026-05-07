@@ -8,48 +8,318 @@
 <script src="admin/supabase.js"></script>
 
 <style>
-body { font-family: Arial; background:#111; color:white; padding:20px; }
-.container { max-width:600px; margin:auto; }
-input, textarea { width:100%; padding:10px; margin:10px 0; }
-button { padding:12px; width:100%; cursor:pointer; }
+body {
+  margin:0;
+  padding:20px;
+  background:#0f0f0f;
+  color:white;
+  font-family:Arial;
+}
+
+.container {
+  max-width:900px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:1fr 350px;
+  gap:20px;
+}
+
+.box {
+  background:#1a1a1a;
+  padding:20px;
+  border-radius:12px;
+}
+
+input, textarea {
+  width:96%;
+  padding:12px;
+  margin-top:10px;
+  background:#0f0f0f;
+  border:1px solid #333;
+  color:white;
+  border-radius:8px;
+}
+
+.cart-item {
+  display:flex;
+  gap:12px;
+  margin-bottom:15px;
+  border-bottom:1px solid #333;
+  padding-bottom:15px;
+}
+
+.cart-item img {
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+.total {
+  font-size:22px;
+  margin-top:10px;
+}
+
+button {
+  padding:12px;
+  margin-top:10px;
+  width:100%;
+  cursor:pointer;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+}
+
+#testOrderBtn {
+  background:#444;
+  color:white;
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
+
+<!-- LEFT -->
+<div class="box">
+
 <h1>Checkout</h1>
 
 <input id="name" placeholder="Full Name">
 <input id="email" placeholder="Email">
-<textarea id="address" placeholder="Shipping Address"></textarea>
+<textarea id="address" placeholder="Street Address (required)"></textarea>
 
-<button onclick="placeOrder()">Place Order</button>
+<div id="paypal-button-container"></div>
+
+<button id="testOrderBtn" onclick="testOrder()">
+Test Order
+</button>
+
 </div>
 
+<!-- RIGHT -->
+<div class="box">
+
+<h2>Your Cart</h2>
+<div id="cartItems"></div>
+
+<div class="total">
+Total: $<span id="total">0</span>
+</div>
+
+</div>
+
+</div>
+
+<!-- PAYPAL -->
+<script src="https://www.paypal.com/sdk/js?client-id=ATle5_0p4Vgwv4oSwVDibaLrJRNRRmzDpxISJwto8RVnu2WUXqiGe-e6HZvuzWU_6enu_zLiNXMwng55&currency=USD&intent=capture"></script>
+
 <script>
-async function placeOrder() {
-  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+let cartProducts = [];
+let totalPrice = 0;
+
+/* LOAD CART */
+async function loadCart() {
+
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]");
 
   const { data } = await sb.from("products").select("*");
 
-  let items = data.filter(p => cart.includes(p.id));
+  cartProducts = (data || []).filter(p => cart.includes(p.id));
 
-  let total = items.reduce((sum, p) => sum + Number(p.price), 0);
+  totalPrice = 0;
 
-  await sb.from("orders").insert([{
-    items: items,
-    total: total,
-    name: name.value,
-    email: email.value,
-    address: address.value
-  }]);
+  document.getElementById("cartItems").innerHTML =
+    cartProducts.map(p => {
+      totalPrice += Number(p.price);
+
+      return `
+        <div class="cart-item">
+          <img src="${p.main_image || ''}">
+          <div>
+            <div>${p.name}</div>
+            <div>$${p.price}</div>
+            <div>Stock: ${p.stock}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  document.getElementById("total").innerText = totalPrice.toFixed(2);
+
+  renderPayPal();
+}
+
+/* VALIDATION (FIXED - NO 'name' COLLISION) */
+function validateCheckout() {
+
+  const fullName = document.getElementById("name").value.trim();
+  const emailInput = document.getElementById("email").value.trim();
+  const addressInput = document.getElementById("address").value.trim();
+
+  if (!fullName || !emailInput || !addressInput) {
+    alert("Fill all fields");
+    return false;
+  }
+
+  const regex = /^\d+\s+[A-Za-z0-9\s.,#-]+$/;
+
+  if (!regex.test(addressInput)) {
+    alert("Enter valid street address (must start with number)");
+    return false;
+  }
+
+  return true;
+}
+
+/* SAFE STOCK CHECK (prevents oversell) */
+async function checkStockBeforePay() {
+
+  const ids = cartProducts.map(p => p.id);
+
+  const { data, error } = await sb
+    .from("products")
+    .select("id, stock")
+    .in("id", ids);
+
+  if (error) return false;
+
+  return data.every(p => Number(p.stock) > 0);
+}
+
+/* REDUCE STOCK AFTER PAYMENT */
+async function reduceStock() {
+
+  for (const item of cartProducts) {
+
+    const newStock = Math.max(0, Number(item.stock) - 1);
+
+    await sb
+      .from("products")
+      .update({ stock: newStock })
+      .eq("id", item.id);
+  }
+}
+
+/* PAYPAL */
+function renderPayPal() {
+
+  const container = document.getElementById("paypal-button-container");
+
+  container.innerHTML = "";
+
+  paypal.Buttons({
+
+    createOrder: async (data, actions) => {
+
+      const ok = await checkStockBeforePay();
+
+      if (!ok) {
+        alert("One or more items are out of stock");
+        throw new Error("Out of stock");
+      }
+
+      if (!validateCheckout()) {
+        throw new Error("Invalid checkout");
+      }
+
+      return actions.order.create({
+        purchase_units: [{
+          amount: {
+            value: totalPrice.toFixed(2)
+          }
+        }]
+      });
+    },
+
+    onApprove: async (data, actions) => {
+
+      const details = await actions.order.capture();
+
+      const order = {
+        items: cartProducts.map(p => ({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          image: p.main_image,
+          qty: 1
+        })),
+
+        total: totalPrice,
+        status: "pending",
+
+        paypal_order_id: data.orderID,
+        paypal_payer_id: details.payer.payer_id,
+
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        address: document.getElementById("address").value
+      };
+
+      const { error } = await sb.from("orders").insert([order]);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      await reduceStock();
+
+      localStorage.removeItem("cart");
+
+      alert("Payment successful!");
+
+      window.location.href = "/";
+    }
+
+  }).render("#paypal-button-container");
+}
+
+/* TEST ORDER */
+async function testOrder() {
+
+  if (!validateCheckout()) return;
+
+  const order = {
+    items: cartProducts.map(p => ({
+      id: p.id,
+      name: p.name,
+      price: Number(p.price),
+      image: p.main_image,
+      qty: 1
+    })),
+
+    total: totalPrice,
+    status: "pending",
+
+    paypal_order_id: "TEST",
+    paypal_payer_id: "TEST",
+
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    address: document.getElementById("address").value
+  };
+
+  const { error } = await sb.from("orders").insert([order]);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await reduceStock();
+
+  alert("Test order created");
 
   localStorage.removeItem("cart");
 
-  alert("Order placed!");
-  window.location.href = "/";
+  window.location.href = "/home";
 }
+
+loadCart();
+
 </script>
 
 </body>
