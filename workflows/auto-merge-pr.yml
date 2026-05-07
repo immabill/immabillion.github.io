@@ -1,0 +1,43 @@
+name: Scheduled PR Auto Merge
+
+on:
+  schedule:
+    # May 7th 4:00 PM CT = 9:00 PM UTC
+    - cron: "0 21 7 5 *"
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Auto merge specific PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // CHANGE THIS if your branch is different
+            const branchName = "staging";
+
+            const pulls = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: "open"
+            });
+
+            const pr = pulls.data.find(p => p.head.ref === branchName);
+
+            if (!pr) {
+              console.log("No PR found for branch:", branchName);
+              return;
+            }
+
+            console.log(`Merging PR #${pr.number}`);
+
+            await github.rest.pulls.merge({
+              owner,
+              repo,
+              pull_number: pr.number,
+              merge_method: "merge"
+            });
