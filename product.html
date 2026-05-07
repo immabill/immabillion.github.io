@@ -1,153 +1,175 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Product</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="admin/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin/supabase.js"></script>
 
-  <style>
-    body {
-      margin:0;
-      font-family: Arial, sans-serif;
-      background:#0d0d0d;
-      color:white;
-    }
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
-    .container {
-      max-width:1200px;
-      margin:auto;
-      padding:40px 20px;
-      display:flex;
-      gap:60px;
-      flex-wrap:wrap;
-      align-items:flex-start;
-      justify-content:center;
-      animation: fadeIn 0.6s ease;
-    }
+body{
+  font-family:Arial, sans-serif;
+  background:#0d0d0d;
+  color:white;
+}
 
-    @keyframes fadeIn {
-      from { opacity:0.7; transform:translateY(20px); }
-      to { opacity:1; transform:translateY(0); }
-    }
+.container{
+  max-width:1400px;
+  margin:auto;
+  padding:40px 24px;
+  display:flex;
+  gap:70px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  justify-content:center;
+}
 
-    /* LEFT SIDE */
-    .left {
-      flex:1;
-      min-width:300px;
-      max-width:500px;
-    }
+.left{
+  flex:1;
+  min-width:320px;
+  max-width:650px;
+}
 
-    .main-img {
-      opacity:1;
-      width:100%;
-      border-radius:12px;
-      overflow:hidden;
-      cursor:zoom-in;
-      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 1));
-      filter: drop-shadow(0px 0px 10px rgba(184, 184, 184, 0.7));
-    }
+.main-img{
+  width:100%;
+  border-radius:18px;
+  overflow:hidden;
+  cursor:zoom-in;
+  filter:drop-shadow(0px 0px 14px rgba(184,184,184,0.5));
+}
 
-    .main-img img {
-      opacity:1;
-      width:100%;
-      transition: transform 0.4s ease;
-      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 1));
-      filter: drop-shadow(0px 0px 10px rgba(184, 184, 184, 0.7));
-    }
+.main-img img{
+  width:100%;
+  display:block;
+  transition:transform 0.4s ease;
+}
 
-    .main-img:hover img {
-      opacity:1;
-      transform: scale(1.1);
-      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 1));
-      filter: drop-shadow(0px 0px 10px rgba(184, 184, 184, 0.7));
-    }
+.main-img:hover img{
+  transform:scale(1.08);
+}
 
-    .gallery {
-      display:flex;
-      gap:10px;
-      margin-top:15px;
-      flex-wrap:wrap;
-    }
+.gallery{
+  display:flex;
+  gap:12px;
+  margin-top:18px;
+  flex-wrap:wrap;
+}
 
-    .gallery img {
-      width:70px;
-      height:70px;
-      object-fit:cover;
-      border-radius:6px;
-      cursor:pointer;
-      opacity:0.4;
-      transition:0.2s;
-      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 1));
-      filter: drop-shadow(0px 0px 10px rgba(184, 184, 184, 0.7));
-    }
+.gallery img{
+  width:85px;
+  height:85px;
+  object-fit:cover;
+  border-radius:10px;
+  cursor:pointer;
+  opacity:0.45;
+  transition:0.2s;
+  filter:drop-shadow(0px 0px 10px rgba(184,184,184,0.4));
+}
 
-    .gallery img:hover {
-      opacity:1;
-      transform:scale(1.05);
-    }
+.gallery img:hover{
+  opacity:1;
+  transform:scale(1.05);
+}
 
-    /* RIGHT SIDE */
-    .right {
-      flex:1;
-      min-width:280px;
-      max-width:500px;
-    }
+.right{
+  flex:1;
+  min-width:300px;
+  max-width:520px;
+}
 
-    h1 {
-      font-size:28px;
-      margin-bottom:10px;
-    }
+h1{
+  font-size:clamp(32px,5vw,52px);
+  margin-bottom:14px;
+}
 
-    .price {
-      font-size:24px;
-      margin:15px 0;
-      font-weight:bold;
-    }
+.price{
+  font-size:clamp(28px,4vw,40px);
+  margin:20px 0;
+  font-weight:bold;
+}
 
-    .desc {
-      color:#ccc;
-      line-height:1.5;
-      margin-bottom:20px;
-    }
+.desc{
+  color:#ccc;
+  line-height:1.8;
+  margin-bottom:24px;
+  font-size:clamp(15px,2vw,18px);
+}
 
-    .stock {
-      margin-bottom:20px;
-      color:#aaa;
-    }
+.stock{
+  margin-bottom:24px;
+  color:#aaa;
+  font-size:18px;
+}
 
-    button {
-      width:100%;
-      padding:14px;
-      font-size:16px;
-      background:white;
-      color:black;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      transition:0.2s;
-    }
+button{
+  width:100%;
+  padding:18px;
+  font-size:18px;
+  background:white;
+  color:black;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  transition:0.2s;
+  font-weight:bold;
+}
 
-    button:hover {
-      opacity:0.8;
-      transform:scale(1.02);
-    }
+button:hover{
+  opacity:0.85;
+  transform:scale(1.02);
+}
 
-    .loading {
-      text-align:center;
-      margin-top:100px;
-      font-size:20px;
-      opacity:0.9;
-    }
+.loading{
+  text-align:center;
+  margin-top:100px;
+  font-size:24px;
+}
 
-    @media (max-width:800px) {
-      .container {
-        flex-direction:column;
-        align-items:center;
-      }
-    }
-  </style>
+@media (max-width:900px){
+
+  .container{
+    flex-direction:column;
+    align-items:center;
+    padding:24px 16px;
+    gap:40px;
+  }
+
+  .left,
+  .right{
+    width:100%;
+    max-width:100%;
+  }
+
+  .gallery{
+    justify-content:center;
+  }
+}
+
+@media (max-width:600px){
+
+  .gallery img{
+    width:70px;
+    height:70px;
+  }
+
+  button{
+    padding:16px;
+    font-size:16px;
+  }
+
+  .desc{
+    line-height:1.6;
+  }
+}
+</style>
 </head>
 
 <body>
@@ -156,11 +178,6 @@
 
 <script>
 const id = new URLSearchParams(window.location.search).get("id");
-
-if (!window.sb) {
-  document.getElementById("app").innerHTML = "Database not connected";
-  throw new Error("Supabase not loaded");
-}
 
 async function loadProduct() {
 
@@ -172,7 +189,6 @@ async function loadProduct() {
 
   if (error || !data) {
     document.getElementById("app").innerHTML = "Product not found";
-    console.error(error);
     return;
   }
 

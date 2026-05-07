@@ -2,77 +2,157 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Checkout</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="admin/supabase.js"></script>
 
 <style>
-body {
+*{
   margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
   padding:20px;
   background:#0f0f0f;
   color:white;
-  font-family:Arial;
+  font-family:Arial, sans-serif;
 }
 
-.container {
-  max-width:900px;
+.container{
+  width:100%;
+  max-width:1300px;
   margin:auto;
   display:grid;
-  grid-template-columns:1fr 350px;
-  gap:20px;
+  grid-template-columns:1fr 380px;
+  gap:25px;
 }
 
-.box {
+.box{
   background:#1a1a1a;
-  padding:20px;
-  border-radius:12px;
+  padding:28px;
+  border-radius:18px;
 }
 
-input, textarea {
-  width:96%;
-  padding:12px;
-  margin-top:10px;
+h1{
+  font-size:clamp(28px,4vw,42px);
+  margin-bottom:20px;
+}
+
+h2{
+  font-size:clamp(22px,3vw,30px);
+  margin-bottom:18px;
+}
+
+input,
+textarea{
+  width:100%;
+  padding:16px;
+  margin-top:14px;
   background:#0f0f0f;
   border:1px solid #333;
   color:white;
-  border-radius:8px;
+  border-radius:12px;
+  font-size:16px;
 }
 
-.cart-item {
+textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.cart-item{
   display:flex;
-  gap:12px;
-  margin-bottom:15px;
+  gap:14px;
+  margin-bottom:18px;
   border-bottom:1px solid #333;
-  padding-bottom:15px;
+  padding-bottom:18px;
+  align-items:center;
 }
 
-.cart-item img {
-  width:70px;
-  height:70px;
+.cart-item img{
+  width:90px;
+  height:90px;
   object-fit:cover;
-  border-radius:8px;
+  border-radius:12px;
 }
 
-.total {
-  font-size:22px;
-  margin-top:10px;
+.cart-item div{
+  font-size:15px;
+  line-height:1.6;
 }
 
-button {
-  padding:12px;
-  margin-top:10px;
-  width:100%;
-  cursor:pointer;
-  border:none;
-  border-radius:8px;
+.total{
+  font-size:clamp(24px,3vw,34px);
+  margin-top:18px;
   font-weight:bold;
 }
 
-#testOrderBtn {
+button{
+  padding:16px;
+  margin-top:16px;
+  width:100%;
+  cursor:pointer;
+  border:none;
+  border-radius:12px;
+  font-weight:bold;
+  font-size:16px;
+  transition:0.2s;
+}
+
+button:hover{
+  transform:scale(1.02);
+  opacity:0.9;
+}
+
+#testOrderBtn{
   background:#444;
   color:white;
+}
+
+@media (max-width:950px){
+
+  body{
+    padding:14px;
+  }
+
+  .container{
+    grid-template-columns:1fr;
+  }
+
+  .box{
+    padding:22px;
+  }
+
+  .cart-item img{
+    width:75px;
+    height:75px;
+  }
+}
+
+@media (max-width:600px){
+
+  h1{
+    text-align:center;
+  }
+
+  .cart-item{
+    gap:12px;
+  }
+
+  .cart-item img{
+    width:70px;
+    height:70px;
+  }
+
+  input,
+  textarea,
+  button{
+    font-size:15px;
+  }
 }
 </style>
 </head>
@@ -81,7 +161,6 @@ button {
 
 <div class="container">
 
-<!-- LEFT -->
 <div class="box">
 
 <h1>Checkout</h1>
@@ -92,9 +171,12 @@ button {
 
 <div id="paypal-button-container"></div>
 
+<button id="testOrderBtn" onclick="testOrder()">
+Test Order
+</button>
+
 </div>
 
-<!-- RIGHT -->
 <div class="box">
 
 <h2>Your Cart</h2>
@@ -108,7 +190,6 @@ Total: $<span id="total">0</span>
 
 </div>
 
-<!-- PAYPAL -->
 <script src="https://www.paypal.com/sdk/js?client-id=AVVbJ_9rQ3B0VB-F133FV1yzMge2k129aAZR2jqFQ7LMVieoOsyPRbuDwcr_WMwP30T11t95Vy-eGwEI&currency=USD&intent=capture"></script>
 
 <script>
@@ -116,7 +197,6 @@ Total: $<span id="total">0</span>
 let cartProducts = [];
 let totalPrice = 0;
 
-/* LOAD CART */
 async function loadCart() {
 
   const cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -148,7 +228,6 @@ async function loadCart() {
   renderPayPal();
 }
 
-/* VALIDATION (FIXED - NO 'name' COLLISION) */
 function validateCheckout() {
 
   const fullName = document.getElementById("name").value.trim();
@@ -163,14 +242,13 @@ function validateCheckout() {
   const regex = /^\d+\s+[A-Za-z0-9\s.,#-]+$/;
 
   if (!regex.test(addressInput)) {
-    alert("Enter valid street address (must start with number)");
+    alert("Enter valid street address");
     return false;
   }
 
   return true;
 }
 
-/* SAFE STOCK CHECK (prevents oversell) */
 async function checkStockBeforePay() {
 
   const ids = cartProducts.map(p => p.id);
@@ -185,7 +263,6 @@ async function checkStockBeforePay() {
   return data.every(p => Number(p.stock) > 0);
 }
 
-/* REDUCE STOCK AFTER PAYMENT */
 async function reduceStock() {
 
   for (const item of cartProducts) {
@@ -199,7 +276,6 @@ async function reduceStock() {
   }
 }
 
-/* PAYPAL */
 function renderPayPal() {
 
   const container = document.getElementById("paypal-button-container");
@@ -273,7 +349,6 @@ function renderPayPal() {
   }).render("#paypal-button-container");
 }
 
-/* TEST ORDER */
 async function testOrder() {
 
   if (!validateCheckout()) return;
